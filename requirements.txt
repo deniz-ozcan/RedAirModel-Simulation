@@ -1,0 +1,6 @@
+gym~=0.21.0
+numpy~=1.26.2
+torch~=2.1.1
+JSBSim~=1.2.0
+pygame~=2.5.2
+moderngl~=5.9.0

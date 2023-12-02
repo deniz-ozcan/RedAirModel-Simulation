@@ -1,8 +1,9 @@
 import gym
 import jsbsim_gym.jsbsim_gym
-import imageio as iio
+# import imageio as iio
 from jsbsim_gym.features import JSBSimFeatureExtractor
 from stable_baselines3 import SAC
+
 policy_kwargs = dict(features_extractor_class=JSBSimFeatureExtractor)
 env = gym.make("JSBSim-v0")
 model = SAC.load("models/jsbsim_sac", env)
