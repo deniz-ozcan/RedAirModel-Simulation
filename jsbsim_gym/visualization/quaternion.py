@@ -2,6 +2,30 @@ import numpy as np
 
 
 class Quaternion:
+    """
+    Quaternion (dört elemanlı hiperkompleks sayı) işlemleri gerçekleştiren bir Quaternion sınıfını içerir. İşte sınıfın temel özellikleri:
+
+    İnit Fonksiyonu (__init__):
+        Quaternion sınıfının başlatıcı fonksiyonudur. Varsayılan olarak, quaternion'u temsil eden dört elemanını da (w, x, y, z) alır.
+    Çarpma Operatörü (__mul__):
+        Quaternion'ları ve scalar (float) değerleri çarpmak için kullanılır. Quaternion ile quaternion çarpımı, quaternion çarpımının matematiksel tanımına göre yapılır.
+    Tersini Alma Fonksiyonu (inv):
+        Quaternion'un tersini (inverse) alır.
+    Matris Dönüşümü Fonksiyonu (mat):
+        Quaternion'u bir dönüş matrisine çevirir.
+    Euler Açılarından Quaternion Oluşturma Fonksiyonu (from_euler):
+        Euler açılarından (phi, theta, psi) bir quaternion oluşturan sınıf metodudur.
+    Repr Fonksiyonu (__repr__):
+        Sınıfın temsilini (representation) oluşturan fonksiyon. Bu, sınıfın bir nesnesini ekrana bastırmak için kullanılır.
+    Kopya Alma Fonksiyonu (copy):
+        Quaternion'un bir kopyasını oluşturan fonksiyon.
+    Özellikler (@property):
+        w, x, y, z gibi quaternion elemanlarına ulaşmak veya onları değiştirmek için kullanılır.
+
+    Sınıf, quaternion matematiksel operasyonlarını gerçekleştirmek için kullanışlıdır. 
+    Quaternion'lar, özellikle 3D dönüşleri temsil etmek ve bu dönüşleri etkili bir şekilde uygulamak için sıklıkla kullanılır.
+    """
+
     def __init__(self, w=1, x=0, y=0, z=0):
         self._arr = np.array([w, x, y, z], dtype=np.float32)
 

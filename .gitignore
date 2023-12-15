@@ -24,6 +24,8 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+.idea/
+
 MANIFEST
 
 # PyInstaller
@@ -155,3 +157,4 @@ cython_debug/
 #user added
 .DS_Store
 *.pkl
+*.txt
