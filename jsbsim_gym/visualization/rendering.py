@@ -11,7 +11,8 @@ def load_shader(ctx: mgl.Context, vertex_filename, frag_filename):
     """
     Bu Python fonksiyonu, bir OpenGL shader programını yüklemek için kullanılır. 
     Shader programı, genellikle bir vertex shader ve bir fragment shader'ı içerir. 
-    Fonksiyon, verilen dosya adlarındaki vertex ve fragment shader kaynak kodlarını okur, OpenGL bağlamı (context) üzerinde bir shader programı oluşturur ve bu programı döndürür.
+    Fonksiyon, verilen dosya adlarındaki vertex ve fragment shader kaynak kodlarını okur, 
+    OpenGL bağlamı (context) üzerinde bir shader programı oluşturur ve bu programı döndürür.
 
     Fonksiyonun parametreleri şunlardır:
 

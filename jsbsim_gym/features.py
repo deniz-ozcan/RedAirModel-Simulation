@@ -2,7 +2,6 @@ import torch as th
 
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 
-
 class JSBSimFeatureExtractor(BaseFeaturesExtractor):
     """
     Feature extractor to help learn the JSBSim environment. 
@@ -53,11 +52,14 @@ class JSBSimFeatureExtractor(BaseFeaturesExtractor):
     Bu, pi ve -pi'nin özellik alanında aynı olmasını ve aynı çıktıyı üretmesini sağlar.
     """
     """
-    Bu PyTorch JSBSimFeatureExtractor sınıfı, bir gözlem uzayını (observation space) giriş olarak alır ve bu gözlemleri önceden belirlenmiş bir şekilde işleyip özellik vektörlerine dönüştürür. Bu dönüşüm, JSBSim simulasyonundan elde edilen özel bir gözlem formatı üzerinde gerçekleştirilmiştir. Bu özellik vektörleri ardından genellikle bir politika ağında veya değer fonksiyonunda kullanılmak üzere tasarlanmıştır.
+    Bu PyTorch JSBSimFeatureExtractor sınıfı, bir gözlem uzayını (observation space) giriş olarak alır ve bu gözlemleri önceden belirlenmiş bir şekilde işleyip özellik vektörlerine dönüştürür.
+    Bu dönüşüm, JSBSim simulasyonundan elde edilen özel bir gözlem formatı üzerinde gerçekleştirilmiştir. 
+    Bu özellik vektörleri ardından genellikle bir politika ağında veya değer fonksiyonunda kullanılmak üzere tasarlanmıştır.
 
     İşlevselliği şu şekildedir:
     __init__(self, observation_space): Sınıfın başlatıcı metodudur. Gözlem uzayını (observation space) ve özellik vektörünün uzunluğunu belirler.
-    forward(self, observations): Bu metod, giriş olarak aldığı gözlemleri önceden belirlenmiş bir şekilde işleyip özellik vektörlerine dönüştürür. Gözlemler, belirli bir sırayla kesilir ve işlenir. Daha sonra bu işlenmiş özellikler birleştirilerek tek bir tensor haline getirilir ve döndürülür.
+    forward(self, observations): Bu metod, giriş olarak aldığı gözlemleri önceden belirlenmiş bir şekilde işleyip özellik vektörlerine dönüştürür. 
+    Gözlemler, belirli bir sırayla kesilir ve işlenir. Daha sonra bu işlenmiş özellikler birleştirilerek tek bir tensor haline getirilir ve döndürülür.
     Bu özellik çıkarma (feature extraction) sınıfının çıkarma işlemleri şu adımları içerir:
     Pozisyon Dönüşümü (Transform Position): Hedef konumu ve uçağın mevcut pozisyonu arasındaki mesafe, yükseklik ve yön bilgilerini hesaplar ve normalize eder.
     Açıları Sinüs/Kosinüs Çiftlerine Dönüştürme: Hız, açısal hız ve açılara ait bilgileri hesaplar ve bunları sinüs ve kosinüs çiftleri olarak döndürür.

@@ -21,7 +21,8 @@ env.close()
 
 """
 
-Bu kod, JSBSim tabanlı bir OpenAI Gym çevresini ve eğitilmiş bir Soft Actor-Critic (SAC) politikasını yükleyerek, çevrede bir döngü içinde politikayı kullanarak simülasyonu çalıştırmaktadır. İşte bu kodun genel açıklamaları:
+Bu kod, JSBSim tabanlı bir OpenAI Gym çevresini ve eğitilmiş bir Soft Actor-Critic 
+(SAC) politikasını yükleyerek, çevrede bir döngü içinde politikayı kullanarak simülasyonu çalıştırmaktadır. İşte bu kodun genel açıklamaları:
 
 gym ve jsbsim_gym modüllerini içe aktarıyor. Ayrıca, çevrenin özellik çıkarma sınıfı olan JSBSimFeatureExtractor'ı içe aktarıyor.
 

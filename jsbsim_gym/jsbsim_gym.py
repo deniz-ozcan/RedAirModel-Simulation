@@ -4,22 +4,28 @@ import numpy as np
 from .visualization.rendering import Viewer, load_mesh, load_shader, RenderObject, Grid
 from .visualization.quaternion import Quaternion
 
-STATE_FORMAT = ["position/lat-gc-rad","position/long-gc-rad","position/h-sl-meters","velocities/mach","aero/alpha-rad","aero/beta-rad","velocities/p-rad_sec","velocities/q-rad_sec","velocities/r-rad_sec","attitude/phi-rad","attitude/theta-rad","attitude/psi-rad"]
-STATE_LOW = np.array([-np.inf, -np.inf, 0, 0, -np.pi, -np.pi, -np.inf, -np.inf, -np.inf, -np.pi, -np.pi, -np.pi, -np.inf, -np.inf, 0])
-STATE_HIGH = np.array([np.inf, np.inf, np.inf, np.inf, np.pi, np.pi, np.inf, np.inf, np.inf, np.pi, np.pi, np.pi, np.inf, np.inf, np.inf])
+STATE_FORMAT = [
+    "position/lat-gc-rad", "position/long-gc-rad", "position/h-sl-meters", "velocities/mach",
+    "aero/alpha-rad", "aero/beta-rad", "velocities/p-rad_sec", "velocities/q-rad_sec", "velocities/r-rad_sec",
+    "attitude/phi-rad", "attitude/theta-rad", "attitude/psi-rad"]
+STATE_LOW = np.array(
+    [-np.inf, -np.inf, 0, 0, -np.pi, -np.pi, -np.inf, -np.inf, -np.inf, -np.pi, -np.pi, -np.pi, -np.inf, -np.inf, 0])
+STATE_HIGH = np.array(
+    [np.inf, np.inf, np.inf, np.inf, np.pi, np.pi, np.inf, np.inf, np.inf, np.pi, np.pi, np.pi, np.inf, np.inf, np.inf])
 # Radius of the earth
 # Dünyanın yarıçapı
 RADIUS = 6.3781e6
+
+
 class JSBSimEnv(gym.Env):
     """
-    ### Description
-    Gym environment using JSBSim to simulate an F-16 aerodynamics model with a simple point-to-point navigation task. 
-    The environment terminates when the agent enters a cylinder around the goal or crashes by flying lower than sea level. 
-    The goal is initialized at a random location in a cylinder around the agent's starting position. 
+    ### Description Gym environment using JSBSim to simulate an F-16 aerodynamics model with a simple point-to-point
+    navigation task. The environment terminates when the agent enters a cylinder around the goal or crashes by flying
+    lower than sea level. The goal is initialized at a random location in a cylinder around the agent's starting
+    position.
 
-    ### Observation
-    The observation is given as the position of the agent, velocity (mach, alpha, beta), angular rates, attitude, and position of the goal (concatenated in that order). 
-    Units are meters and radians. 
+    ### Observation The observation is given as the position of the agent, velocity (mach, alpha, beta),
+    angular rates, attitude, and position of the goal (concatenated in that order). Units are meters and radians.
 
     ### Action Space
     Actions are given as normalized body rate commands and throttle command. 
@@ -31,15 +37,13 @@ class JSBSimEnv(gym.Env):
     A positive reward is given for reaching the goal and a negative reward is given for crashing. 
     It is recommended to use the PositionReward wrapper below to eliminate the problem of sparse rewards.
     """
-    """
-    ### Tanım
-    Basit bir noktadan noktaya navigasyon görevi ile bir F-16 aerodinamik modelini simüle etmek için JSBSim'i kullanan spor salonu ortamı.
-    Ajan kalenin etrafında bir silindire girdiğinde veya deniz seviyesinden daha alçakta uçarak çarptığında ortam sona erer.
-    Hedef, aracının başlangıç konumu etrafındaki bir silindirde rastgele bir konumda başlatılır.
+    """### Tanım Basit bir noktadan noktaya navigasyon görevi ile bir F-16 aerodinamik modelini simüle etmek için 
+    JSBSim'i kullanan spor salonu ortamı. Ajan kalenin etrafında bir silindire girdiğinde veya deniz seviyesinden 
+    daha alçakta uçarak çarptığında ortam sona erer. Hedef, aracının başlangıç konumu etrafındaki bir silindirde 
+    rastgele bir konumda başlatılır.
 
-    ### Gözlem
-    Gözlem, ajanın konumu, hızı (mach, alfa, beta), açısal hızlar, tutum ve hedefin konumu (bu sırayla birleştirilmiş) olarak verilir.
-    Birimler metre ve radyandır.
+    ### Gözlem Gözlem, ajanın konumu, hızı (mach, alfa, beta), açısal hızlar, tutum ve hedefin konumu (bu sırayla 
+    birleştirilmiş) olarak verilir. Birimler metre ve radyandır.
 
     ### Aksiyon Alanı
     Eylemler normalleştirilmiş vücut hızı komutları ve gaz kelebeği komutu olarak verilir.
@@ -55,12 +59,13 @@ class JSBSimEnv(gym.Env):
     Bu çevre, JSBSim adlı bir uçuş dinamik modelleme kütüphanesini kullanarak bir uçağın kontrolünü sağlar. 
     İşte bu çevre sınıfının temel özellikleri:
 
-    __init__(self, root='.'): Çevre sınıfının başlatıcı metodu. 
-    Gözlem ve eylem uzaylarını tanımlar, JSBSim simülasyonunu başlatır, F-16 modelini yükler ve başlangıç koşullarını ayarlar.
+    __init__(self, root='.'): Çevre sınıfının başlatıcı metodu. Gözlem ve eylem uzaylarını tanımlar, 
+    JSBSim simülasyonunu başlatır, F-16 modelini yükler ve başlangıç koşullarını ayarlar.
 
     _set_initial_conditions(self): JSBSim başlangıç koşullarını ayarlayan özel bir metod.
 
-    step(self, action): Bir adım simülasyonu ilerletir. JSBSim'e kontrol girişlerini aktarır, simülasyonu birkaç adım ilerletir, ardından durumu alır ve ödülü hesaplar.
+    step(self, action): Bir adım simülasyonu ilerletir. JSBSim'e kontrol girişlerini aktarır, simülasyonu birkaç adım 
+    ilerletir, ardından durumu alır ve ödülü hesaplar.
 
     _get_state(self): JSBSim'den durumu alır ve çevre sınıfının içindeki self.state özelliğine kaydeder.
 
@@ -70,9 +75,9 @@ class JSBSimEnv(gym.Env):
 
     close(self): Görselleştirmeyi sonlandırır.
 
-    Bu çevre, bir uçağın belirli bir hedefe ulaşma görevini simüle eder. Kontrol girişleri roll, pitch, yaw ve gaz (throttle) olarak dört boyutludur. 
-    Hedefe ulaşma veya çarpışma durumlarına göre ödüller verilir. 
-    Görselleştirmek için bir Viewer sınıfını kullanarak uçağın ve hedefin 3D konumunu ve durumunu gösterir.
+    Bu çevre, bir uçağın belirli bir hedefe ulaşma görevini simüle eder. Kontrol girişleri roll, pitch, yaw ve gaz (
+    throttle) olarak dört boyutludur. Hedefe ulaşma veya çarpışma durumlarına göre ödüller verilir. Görselleştirmek 
+    için bir Viewer sınıfını kullanarak uçağın ve hedefin 3D konumunu ve durumunu gösterir.
     
     """
 
@@ -82,7 +87,7 @@ class JSBSimEnv(gym.Env):
         # Set observation and action space format
         # Gözlem ve eylem alanı biçimini ayarlayın
         self.observation_space = gym.spaces.Box(STATE_LOW, STATE_HIGH, (15,))
-        self.action_space = gym.spaces.Box(np.array([-1,-1,-1,0]), 1, (4,))
+        self.action_space = gym.spaces.Box(np.array([-1, -1, -1, 0]), 1, (4,))
 
         # Initialize JSBSim
         # JSBSim'i başlat
@@ -148,10 +153,11 @@ class JSBSimEnv(gym.Env):
 
         # Check if reached goal
         # Hedefe ulaşıldı mı kontrol edin 
-        if np.sqrt(np.sum((self.state[:2] - self.goal[:2])**2)) < self.dg and abs(self.state[2] - self.goal[2]) < self.dg:
+        if np.sqrt(np.sum((self.state[:2] - self.goal[:2]) ** 2)) < self.dg and abs(
+                self.state[2] - self.goal[2]) < self.dg:
             reward = 10
             done = True
-        
+
         return np.hstack([self.state, self.goal]), reward, done, {}
 
     def _get_state(self):
@@ -159,7 +165,7 @@ class JSBSimEnv(gym.Env):
         # JSBSim'den tüm durum özelliklerini toplayın
         for i, property in enumerate(STATE_FORMAT):
             self.state[i] = self.simulation.get_property_value(property)
-        
+
         # Rough conversion to meters. This should be fine near zero lat/long
         # Metreye yaklaşık dönüşüm. Bu, sıfıra yakın enlem / boylamda iyi olmalıdır.
         self.state[:2] *= RADIUS
@@ -169,7 +175,7 @@ class JSBSimEnv(gym.Env):
         # JSBSim'de başlangıç koşullarını yeniden çalıştırın
         self.simulation.run_ic()
         self.simulation.set_property_value('propulsion/set-running', -1)
-        
+
         # Generate a new goal
         # Yeni bir hedef oluşturun
         rng = np.random.default_rng(seed)
@@ -195,7 +201,7 @@ class JSBSimEnv(gym.Env):
 
             f16_mesh = load_mesh(self.viewer.ctx, self.viewer.prog, "f16.obj")
             self.f16 = RenderObject(f16_mesh)
-            self.f16.transform.scale = 1/30
+            self.f16.transform.scale = 1 / 30
             self.f16.color = 0, 0, .4
 
             goal_mesh = load_mesh(self.viewer.ctx, self.viewer.prog, "cylinder.obj")
@@ -206,12 +212,12 @@ class JSBSimEnv(gym.Env):
             self.viewer.objects.append(self.f16)
             self.viewer.objects.append(self.cylinder)
             self.viewer.objects.append(Grid(self.viewer.ctx, self.viewer.unlit, 21, 1.))
-        
+
         # Rough conversion from lat/long to meters
         # Enlem / boylamdan metre cinsinden yaklaşık dönüşüm
         x, y, z = self.state[:3] * scale
 
-        self.f16.transform.z = x 
+        self.f16.transform.z = x
         self.f16.transform.x = -y
         self.f16.transform.y = z
 
@@ -228,13 +234,13 @@ class JSBSimEnv(gym.Env):
         self.cylinder.transform.y = z
 
         r = self.f16.transform.position - self.cylinder.transform.position
-        rhat = r/np.linalg.norm(r)
-        x,y,z = r
-        yaw = np.arctan2(-x,-z)
-        pitch = np.arctan2(-y, np.sqrt(x**2 + z**2))
+        rhat = r / np.linalg.norm(r)
+        x, y, z = r
+        yaw = np.arctan2(-x, -z)
+        pitch = np.arctan2(-y, np.sqrt(x ** 2 + z ** 2))
 
-
-        self.viewer.set_view(*(r + self.cylinder.transform.position + rhat + np.array([0, .33, 0])), Quaternion.from_euler(-pitch, yaw, 0, mode=1))
+        self.viewer.set_view(*(r + self.cylinder.transform.position + rhat + np.array([0, .33, 0])),
+                             Quaternion.from_euler(-pitch, yaw, 0, mode=1))
 
         # print(self.f16.transform.position)
         # rot = Quaternion.from_euler(-self.state[10], -self.state[11], self.state[9], mode=1)
@@ -248,6 +254,7 @@ class JSBSimEnv(gym.Env):
         if self.viewer is not None:
             self.viewer.close()
             self.viewer = None
+
 
 class PositionReward(gym.Wrapper):
     """
@@ -290,10 +297,12 @@ class PositionReward(gym.Wrapper):
         self.last_distance = np.linalg.norm(displacement)
         return obs
 
+
 # Create entry point to wrapped environment
 # Sarılmış ortama giriş noktası oluşturuyoruz.
 def wrap_jsbsim(**kwargs):
     return PositionReward(JSBSimEnv(**kwargs), 1e-2)
+
 
 # Register the wrapped environment
 # Sarılmış ortamı kaydediyoruz.
@@ -307,11 +316,12 @@ gym.register(
 # Ortamı oluşturmak ve sabit eylem için 1 simülasyon saniyesi çalıştırmak için kısa bir örnek komut dosyası.
 if __name__ == "__main__":
     from time import sleep
+
     env = JSBSimEnv()
     env.reset()
     env.render()
     for _ in range(300):
         env.step(np.array([0.05, -0.2, 0, .5]))
         env.render()
-        sleep(1/30)
+        sleep(1 / 30)
     env.close()
