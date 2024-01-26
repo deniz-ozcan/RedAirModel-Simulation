@@ -3,10 +3,14 @@ import jsbsim_gym.jsbsim_gym
 # import imageio as iio
 from jsbsim_gym.features import JSBSimFeatureExtractor
 from stable_baselines3 import SAC
+from gym.spaces import Dict, Box, Space
+import numpy as np
 
+
+# JSBSimFeatureExtractor'ı oluştururken gözlem alanını kullan
 policy_kwargs = dict(features_extractor_class=JSBSimFeatureExtractor)
 env = gym.make("JSBSim-v0")
-model = SAC.load("models/jsbsim_sac", env)
+model = SAC.load("models/jsbsim_sac2", env)
 
 obs = env.reset()
 done = False

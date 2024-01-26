@@ -6,55 +6,53 @@ from jsbsim_gym.visualization.quaternion import Quaternion
 
 dir_name = os.path.abspath(os.path.dirname(__file__))
 
+"""
+Bu Python fonksiyonu, bir OpenGL shader programını yüklemek için kullanılır. 
+Shader programı, genellikle bir vertex shader ve bir fragment shader'ı içerir. 
+Fonksiyon, verilen dosya adlarındaki vertex ve fragment shader kaynak kodlarını okur, 
+OpenGL bağlamı (context) üzerinde bir shader programı oluşturur ve bu programı döndürür.
 
-def load_shader(ctx: mgl.Context, vertex_filename, frag_filename):
-    """
-    Bu Python fonksiyonu, bir OpenGL shader programını yüklemek için kullanılır. 
-    Shader programı, genellikle bir vertex shader ve bir fragment shader'ı içerir. 
-    Fonksiyon, verilen dosya adlarındaki vertex ve fragment shader kaynak kodlarını okur, 
-    OpenGL bağlamı (context) üzerinde bir shader programı oluşturur ve bu programı döndürür.
+Fonksiyonun parametreleri şunlardır:
 
-    Fonksiyonun parametreleri şunlardır:
+ctx: ModernGL kütüphanesi için bir bağlam nesnesi (context).
+vertex_filename: Vertex shader'ın kaynak kodunu içeren dosyanın adı.
+frag_filename: Fragment shader'ın kaynak kodunu içeren dosyanın adı.
+Fonksiyon, dosyaları okuyarak shader kaynak kodlarını elde eder ve bu kodları kullanarak bir shader programı oluşturur. 
+Oluşturulan shader programı, verilen ctx bağlamına aittir ve vertex ve fragment shader'ları içerir.
 
-    ctx: ModernGL kütüphanesi için bir bağlam nesnesi (context).
-    vertex_filename: Vertex shader'ın kaynak kodunu içeren dosyanın adı.
-    frag_filename: Fragment shader'ın kaynak kodunu içeren dosyanın adı.
-    Fonksiyon, dosyaları okuyarak shader kaynak kodlarını elde eder ve bu kodları kullanarak bir shader programı oluşturur. 
-    Oluşturulan shader programı, verilen ctx bağlamına aittir ve vertex ve fragment shader'ları içerir.
+Bu tür bir fonksiyon, genellikle grafik uygulamalarında, özellikle 3D rendering için OpenGL kullanıldığında shader programlarını yüklemek ve kullanmak için kullanılır. 
+Shader programları, GPU üzerinde çalışan özel programlar olup, görüntüleme işlemleri ve grafik efektlerinin uygulanmasında önemli bir rol oynar.
+"""
 
-    Bu tür bir fonksiyon, genellikle grafik uygulamalarında, özellikle 3D rendering için OpenGL kullanıldığında shader programlarını yüklemek ve kullanmak için kullanılır. 
-    Shader programları, GPU üzerinde çalışan özel programlar olup, görüntüleme işlemleri ve grafik efektlerinin uygulanmasında önemli bir rol oynar.
-    """
-
+def load_shader(context: mgl.Context, vertex_filename, frag_filename):
     with open(os.path.join(dir_name, vertex_filename)) as f:
         vertex_src = f.read()
     with open(os.path.join(dir_name, frag_filename)) as f:
         frag_src = f.read()
-    return ctx.program(vertex_shader=vertex_src, fragment_shader=frag_src)
+    return context.program(vertex_shader=vertex_src, fragment_shader=frag_src)
 
+"""
+Bu Python fonksiyonu, bir 3D modelin Wavefront OBJ dosyasından yüklenmesini sağlar. 
+Fonksiyon, modelin vertex (nokta), normal (yüzey normali) ve yüz (face) verilerini içeren bir OBJ dosyasını okur ve bu verileri kullanarak bir vertex array object (VAO) oluşturur.
+
+Fonksiyonun parametreleri şunlardır:
+
+program: Modelin render edilmesi için kullanılacak shader program.
+filename: Yüklenmek istenen OBJ dosyasının adı.
+Fonksiyon, dosyayı okurken farklı satır türlerine göre işlem yapar:
+
+v: Vertex (nokta) bilgisi ekler.
+vn: Yüzey normali bilgisi ekler.
+f: Yüz (face) bilgisi ekler.
+Dosyanın diğer satır türleri (örneğin, vt, usemtl, mtllib) işleme dahil edilmez.
+
+Son olarak, oluşturulan vertex ve index verileri kullanılarak bir VAO oluşturulur ve bu VAO, verilen shader programına bağlanarak döndürülür.
+
+Bu tür bir fonksiyon genellikle 3D grafik uygulamalarında kullanılan model yükleme işlemleri için kullanılır. 
+Bu özel fonksiyon, özellikle ModernGL kütüphanesi kullanılarak OpenGL üzerinde çalışan bir uygulamada kullanılmak üzere tasarlanmış gibi görünüyor.
+"""
 
 def load_mesh(ctx: mgl.Context, program, filename):
-    """
-    Bu Python fonksiyonu, bir 3D modelin Wavefront OBJ dosyasından yüklenmesini sağlar. 
-    Fonksiyon, modelin vertex (nokta), normal (yüzey normali) ve yüz (face) verilerini içeren bir OBJ dosyasını okur ve bu verileri kullanarak bir vertex array object (VAO) oluşturur.
-
-    Fonksiyonun parametreleri şunlardır:
-
-    ctx: ModernGL kütüphanesi için bir bağlam nesnesi (context).
-    program: Modelin render edilmesi için kullanılacak shader program.
-    filename: Yüklenmek istenen OBJ dosyasının adı.
-    Fonksiyon, dosyayı okurken farklı satır türlerine göre işlem yapar:
-
-    v: Vertex (nokta) bilgisi ekler.
-    vn: Yüzey normali bilgisi ekler.
-    f: Yüz (face) bilgisi ekler.
-    Dosyanın diğer satır türleri (örneğin, vt, usemtl, mtllib) işleme dahil edilmez.
-
-    Son olarak, oluşturulan vertex ve index verileri kullanılarak bir VAO oluşturulur ve bu VAO, verilen shader programına bağlanarak döndürülür.
-
-    Bu tür bir fonksiyon genellikle 3D grafik uygulamalarında kullanılan model yükleme işlemleri için kullanılır. 
-    Bu özel fonksiyon, özellikle ModernGL kütüphanesi kullanılarak OpenGL üzerinde çalışan bir uygulamada kullanılmak üzere tasarlanmış gibi görünüyor.
-    """
     v = []
     vn = []
     vertices = []
@@ -66,16 +64,10 @@ def load_mesh(ctx: mgl.Context, program, filename):
             values = line.split()
             if not values: continue
             if values[0] == 'v':
-                vertex = [float(val) for val in values[1:4]]
-                v.append(vertex)
+                v.append([float(val) for val in values[1:4]])
             elif values[0] == 'vn':
-                norm = [float(val) for val in values[1:4]]
-                vn.append(norm)
-            elif values[0] == 'vt':
-                continue
-            elif values[0] in ('usemtl', 'usemat'):
-                continue
-            elif values[0] == 'mtllib':
+                vn.append([float(val) for val in values[1:4]])
+            elif values[0] == 'vt' or values[0] == 'mtllib' or values[0] in ('usemtl', 'usemat'):
                 continue
             elif values[0] == 'f':
                 for val in values[1:]:
@@ -88,49 +80,48 @@ def load_mesh(ctx: mgl.Context, program, filename):
 
     vbo = ctx.buffer(np.hstack(vertices).astype(np.float32).tobytes())
     ebo = ctx.buffer(np.hstack(indices).flatten().astype(np.uint32).tobytes())
-    return ctx.simple_vertex_array(program, vbo, 'aPos', 'aNormal', index_buffer=ebo)
+    return ctx.simple_vertex_array(program, vbo, 'aPos', 'aNormal', index_buffer = ebo)
 
+"""
+Bu Python fonksiyonu, bir perspektif projeksiyon matrisini oluşturmak için kullanılır. Perspektif projeksiyon matrisi, 3D sahnedeki nesnelerin bir kameranın bakış açısından nasıl göründüğünü simgeler.
+Fonksiyonun parametreleri şunlardır:
+
+fov: Görüş açısı (Field of View) derece cinsinden. Fonksiyon, bu açıyı kullanarak içsel olarak radyan cinsine çevirir.
+aspect: Görüntü genişliği ile yüksekliği arasındaki oran.
+near: Kamera tarafından görülebilen en yakın nesnenin uzaklığı.
+far: Kamera tarafından görülebilen en uzak nesnenin uzaklığı.
+Fonksiyon, verilen parametrelerle perspektif projeksiyon matrisini oluşturur ve bu matrisi Numpy kütüphanesiyle temsil edilen bir dizi olarak döndürür.
+"""
 
 def perspective(fov, aspect, near, far):
-    """
-    Bu Python fonksiyonu, bir perspektif projeksiyon matrisini oluşturmak için kullanılır. Perspektif projeksiyon matrisi, 3D sahnedeki nesnelerin bir kameranın bakış açısından nasıl göründüğünü simgeler.
-    Fonksiyonun parametreleri şunlardır:
-
-    fov: Görüş açısı (Field of View) derece cinsinden. Fonksiyon, bu açıyı kullanarak içsel olarak radyan cinsine çevirir.
-    aspect: Görüntü genişliği ile yüksekliği arasındaki oran.
-    near: Kamera tarafından görülebilen en yakın nesnenin uzaklığı.
-    far: Kamera tarafından görülebilen en uzak nesnenin uzaklığı.
-    Fonksiyon, verilen parametrelerle perspektif projeksiyon matrisini oluşturur ve bu matrisi Numpy kütüphanesiyle temsil edilen bir dizi olarak döndürür.
-    """
     fov *= np.pi / 180
     right = -np.tan(fov / 2) * near
     top = -right / aspect
     return np.array([[near / right, 0, 0, 0],
-                     [0, near / top, 0, 0],
-                     [0, 0, (far + near) / (far - near), -2 * far * near / (far - near)],
-                     [0, 0, 1, 0]], dtype=np.float32)
+                    [0, near / top, 0, 0],
+                    [0, 0, (far + near) / (far - near), -2 * far * near / (far - near)],
+                    [0, 0, 1, 0]], dtype=np.float32)
+
+"""
+bir 3D dönüşümü temsil etmek için Transform adlı bir sınıf içerir. Bu sınıf, bir nesnenin pozisyonunu, dönüşünü (rotasyonunu) ve ölçeğini yönetir. 
+Bu sınıf, 3D sahnede nesnelerin pozisyonunu, dönüşünü ve ölçeğini yönetmek için kullanılır.
+Ayrıca, dönüşüm matrisi ve ters dönüşüm matrisi gibi önemli özellikleri sağlar. 
+Transform sınıfı, genellikle grafik programlamada nesnelerin dünyadaki konumlarını ve dönüşlerini temsil etmek için kullanılır.
+İşte sınıfın temel özellikleri:
 
 
+Pozisyon varsayılan olarak (0, 0, 0) olarak ayarlanır, rotasyon varsayılan olarak bir kimlik dönüşü 
+(Quaternion()) ve ölçek (scale) varsayılan olarak 1 olarak ayarlanır.
+
+position, x, y, z: Pozisyonu temsil eden özellikler. Pozisyonun her bir koordinatı ayrı ayrı get ve set edilebilir.
+rotation: Dönüşü (rotasyonu) temsil eden özellik. Dönüş, bir Quaternion nesnesi olarak saklanır.
+matrix: 3D dönüşüm matrisini döndüren özellik. Pozisyon, dönüş ve ölçek bilgilerini içerir.
+inv_matrix: Ters dönüşüm matrisini döndüren özellik. Nesnenin ters dönüşünü, ters pozisyonunu ve ters ölçeğini içerir.
+Metotlar:
+
+copy: Dönüşümün bir kopyasını oluşturur.
+"""
 class Transform:
-    """
-    bir 3D dönüşümü temsil etmek için Transform adlı bir sınıf içerir. Bu sınıf, bir nesnenin pozisyonunu, dönüşünü (rotasyonunu) ve ölçeğini yönetir. 
-    Bu sınıf, 3D sahnede nesnelerin pozisyonunu, dönüşünü ve ölçeğini yönetmek için kullanılır.
-    Ayrıca, dönüşüm matrisi ve ters dönüşüm matrisi gibi önemli özellikleri sağlar. 
-    Transform sınıfı, genellikle grafik programlamada nesnelerin dünyadaki konumlarını ve dönüşlerini temsil etmek için kullanılır.
-    İşte sınıfın temel özellikleri:
-
-    __init__ fonksiyonu, başlangıç durumunu ayarlar. Pozisyon varsayılan olarak (0, 0, 0) olarak ayarlanır, rotasyon varsayılan olarak bir kimlik dönüşü (Quaternion()) ve ölçek (scale) varsayılan olarak 1 olarak ayarlanır.
-    Özellikler (Properties):
-
-    position, x, y, z: Pozisyonu temsil eden özellikler. Pozisyonun her bir koordinatı ayrı ayrı get ve set edilebilir.
-    rotation: Dönüşü (rotasyonu) temsil eden özellik. Dönüş, bir Quaternion nesnesi olarak saklanır.
-    matrix: 3D dönüşüm matrisini döndüren özellik. Pozisyon, dönüş ve ölçek bilgilerini içerir.
-    inv_matrix: Ters dönüşüm matrisini döndüren özellik. Nesnenin ters dönüşünü, ters pozisyonunu ve ters ölçeğini içerir.
-    Metotlar:
-
-    copy: Dönüşümün bir kopyasını oluşturur.
-    """
-
     def __init__(self):
         self._position = np.zeros(3)
         self._rotation = Quaternion()
@@ -273,9 +264,7 @@ class Grid(RenderObject):
 
 class Viewer:
     """
-    3D görüntüleyici (viewer) sınıfını ve bu sınıfın kullanımını içerir. İşte temel özellikleri:
-
-    Viewer Sınıfı (Viewer):
+    3D görüntüleyici (viewer) sınıfını ve bu sınıfın kullanımını içerir. 
 
     __init__ fonksiyonu, görüntüleyiciyi başlatır ve gerekli ayarları yapar.
     run fonksiyonu, görüntüleyiciyi çalıştırmak için bir döngü içinde çağrılır.
