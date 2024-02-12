@@ -109,7 +109,6 @@ Ayrıca, dönüşüm matrisi ve ters dönüşüm matrisi gibi önemli özellikle
 Transform sınıfı, genellikle grafik programlamada nesnelerin dünyadaki konumlarını ve dönüşlerini temsil etmek için kullanılır.
 İşte sınıfın temel özellikleri:
 
-
 Pozisyon varsayılan olarak (0, 0, 0) olarak ayarlanır, rotasyon varsayılan olarak bir kimlik dönüşü 
 (Quaternion()) ve ölçek (scale) varsayılan olarak 1 olarak ayarlanır.
 
@@ -127,6 +126,7 @@ class Transform:
         self._rotation = Quaternion()
         self.scale = 1
 
+    # region Properties
     @property
     def position(self):
         return self._position.copy()
@@ -185,7 +185,7 @@ class Transform:
         rot[:3, :3] = self.rotation.inv().mat()
         matrix = rot.dot(matrix)
         return matrix
-
+    # endregion Properties
 
 class RenderObject:
     """

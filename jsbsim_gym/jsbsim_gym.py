@@ -1,9 +1,10 @@
 import jsbsim
 import gym
 import numpy as np
-from .visualization.rendering import Viewer, load_mesh, load_shader, RenderObject, Grid
+from .visualization.rendering import Viewer, load_mesh, RenderObject, Grid
 from .visualization.quaternion import Quaternion
 from gym import spaces
+
 """
 ### Description Gym environment using JSBSim to simulate an F-16 aerodynamics model with a simple point-to-point
 navigation task. The environment terminates when the agent enters a targetF16 around the goal or crashes by flying
@@ -22,8 +23,8 @@ throttle command should be [0, 1].
 ### Rewards
 A positive reward is given for reaching the goal and a negative reward is given for crashing. 
 It is recommended to use the PositionReward wrapper below to eliminate the problem of sparse rewards.
-"""
-"""### Basit bir noktadan noktaya navigasyon görevi ile bir F-16 aerodinamik modelini simüle etmek için 
+
+### Basit bir noktadan noktaya navigasyon görevi ile bir F-16 aerodinamik modelini simüle etmek için 
 JSBSim'i kullanan ortam. Ajan kalenin etrafında bir silindire girdiğinde veya deniz seviyesinden 
 daha alçakta uçarak çarptığında ortam sona erer. Hedef, aracının başlangıç konumu etrafındaki bir silindirde 
 rastgele bir konumda başlatılır.
@@ -40,8 +41,7 @@ gaz kelebeği komutu [0, 1] olmalıdır.
 ### Ödüller
 Hedefe ulaşmak için olumlu bir ödül verilirken, hedefe ulaşmak için olumsuz bir ödül verilir.
 Seyrek ödül sorununu ortadan kaldırmak için aşağıdaki PositionReward sarmalayıcısının kullanılması tavsiye edilir.
-"""
-"""
+
 Bu çevre, JSBSim adlı bir uçuş dinamik modelleme kütüphanesini kullanarak bir uçağın kontrolünü sağlar. 
 
 __init__(self, root='.'): Çevre sınıfının başlatıcı metodu. Gözlem ve eylem uzaylarını tanımlar, 
@@ -60,29 +60,24 @@ render(self, mode='human'): Simülasyonu görselleştirir. Görselleştirmeyi sa
 
 close(self): Görselleştirmeyi sonlandırır.
 
-Bu çevre, bir uçağın belirli bir hedefe ulaşma görevini simüle eder. Kontrol girişleri roll, pitch, yaw ve gaz (
-throttle) olarak dört boyutludur. Hedefe ulaşma veya çarpışma durumlarına göre ödüller verilir. Görselleştirmek 
-için bir Viewer sınıfını kullanarak uçağın ve hedefin 3D konumunu ve durumunu gösterir.
+Bu çevre, bir uçağın belirli bir hedefe ulaşma görevini simüle eder. Kontrol girişleri roll, pitch, yaw ve gaz (throttle) olarak dört boyutludur. 
+Hedefe ulaşma veya çarpışma durumlarına göre ödüller verilir. Görselleştirmek için bir Viewer sınıfını kullanarak uçağın ve hedefin 3D konumunu ve durumunu gösterir.
 
-"""
-"""
 gym.space.dict bu formatta obs spacelere bakılması gerekiyor.
 """
 
 STATE_FORMAT = [
-    "position/lat-gc-rad", "position/long-gc-rad", "position/h-sl-meters", "velocities/mach",
-    "aero/alpha-rad", "aero/beta-rad", "velocities/p-rad_sec", "velocities/q-rad_sec", "velocities/r-rad_sec",
+    "position/lat-gc-rad", "position/long-gc-rad", "position/h-sl-meters", 
+    "velocities/mach", "aero/alpha-rad", "aero/beta-rad", 
+    "velocities/p-rad_sec", "velocities/q-rad_sec", "velocities/r-rad_sec",
     "attitude/phi-rad", "attitude/theta-rad", "attitude/psi-rad"]
-STATE_LOW = np.array(
-    [-np.inf, -np.inf, 0, 0, -np.pi, -np.pi, -np.inf, -np.inf, -np.inf, -np.pi, -np.pi, -np.pi, -np.inf, -np.inf, 0])
-STATE_HIGH = np.array(
-    [np.inf, np.inf, np.inf, np.inf, np.pi, np.pi, np.inf, np.inf, np.inf, np.pi, np.pi, np.pi, np.inf, np.inf, np.inf])
+
+STATE_LOW = np.array([-np.inf, -np.inf, 0, 0, -np.pi, -np.pi, -np.inf, -np.inf, -np.inf, -np.pi, -np.pi, -np.pi, -np.inf, -np.inf, 0])
+STATE_HIGH = np.array([np.inf, np.inf, np.inf, np.inf, np.pi, np.pi, np.inf, np.inf, np.inf, np.pi, np.pi, np.pi, np.inf, np.inf, np.inf])
 
 
-# STATE_LOW = np.array(
-#     [-np.inf, -np.inf, 0, 0, -np.pi, -np.pi, -np.inf, -np.inf, -np.inf, -np.pi, -np.pi, -np.pi, -np.inf, -np.inf, 0], dtype=np.float32)
-# STATE_HIGH = np.array(
-#     [np.inf, np.inf, np.inf, np.inf, np.pi, np.pi, np.inf, np.inf, np.inf, np.pi, np.pi, np.pi, np.inf, np.inf, np.inf], dtype=np.float32)
+# STATE_LOW = np.array([-np.inf, -np.inf, 0, 0, -np.pi, -np.pi, -np.inf, -np.inf, -np.inf, -np.pi, -np.pi, -np.pi, -np.inf, -np.inf, 0], dtype=np.float32)
+# STATE_HIGH = np.array([np.inf, np.inf, np.inf, np.inf, np.pi, np.pi, np.inf, np.inf, np.inf, np.pi, np.pi, np.pi, np.inf, np.inf, np.inf], dtype=np.float32)
 
 RADIUS = 6.3781e6 # Radius of the earth
 
@@ -90,35 +85,31 @@ class JSBSimEnv(gym.Env):
     def __init__(self, root='.'):
         super().__init__()
 
-        # Set observation and action space format
-        # Gözlem ve eylem alanı biçimini ayarlayın
+        # Set observation and action space format / Gözlem ve eylem alanı biçimini ayarlayın
         self.action_space = spaces.Box(np.array([-1, -1, -1, 0]), 1, (4,))
-        self.observation_space = spaces.Box(STATE_LOW, STATE_HIGH, (15,))
-        # print(STATE_LOW[:3].shape)
-        # self.observation_space = spaces.Dict({
-        #     # "position": spaces.Box(low=STATE_LOW[:3], high=STATE_HIGH[:3], dtype=np.float32),
-        #     # "mach": spaces.Box(low=STATE_LOW[3:4], high=STATE_HIGH[3:4], dtype=np.float32),
-        #     # "alpha_beta": spaces.Box(low=STATE_LOW[4:6], high=STATE_HIGH[4:6], dtype=np.float32),
-        #     # "angular_rates": spaces.Box(low=STATE_LOW[6:9], high=STATE_HIGH[6:9], dtype=np.float32),
-        #     # "phi_theta": spaces.Box(low=STATE_LOW[9:11], high=STATE_HIGH[9:11], dtype=np.float32),
-        #     # "psi": spaces.Box(low=STATE_LOW[11:12], high=STATE_HIGH[11:12], dtype=np.float32),
-        #     # "goal": spaces.Box(low=STATE_LOW[12:], high=STATE_HIGH[12:], dtype=np.float32),
-        #     "position": spaces.Box(low=-100, high=100, shape=(3,), dtype=np.float32),
-        #     "mach": spaces.Box(low=0, high=np.inf, shape=(1,), dtype=np.float32),
-        #     "alpha_beta": spaces.Box(low=-np.pi, high=np.pi, shape=(2,), dtype=np.float32),
-        #     "angular_rates": spaces.Box(low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32),
-        #     "phi_theta": spaces.Box(low=-np.pi, high=np.pi, shape=(2,), dtype=np.float32),
-        #     "psi": spaces.Box(low=-np.pi, high=np.pi, shape=(1,), dtype=np.float32),
-        #     "goal": spaces.Box(low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32),
-        # })
-        # Initialize JSBSim
-        # JSBSim'i başlat
+        # self.observation_space = spaces.Box(STATE_LOW, STATE_HIGH, (15,))
+
+        self.observation_space = spaces.Dict({
+            "position": spaces.Box(low=STATE_LOW[:3], high=STATE_HIGH[:3], dtype=np.float32),
+            "mach": spaces.Box(low=STATE_LOW[3:4], high=STATE_HIGH[3:4], dtype=np.float32),
+            "alpha_beta": spaces.Box(low=STATE_LOW[4:6], high=STATE_HIGH[4:6], dtype=np.float32),
+            "angular_rates": spaces.Box(low=STATE_LOW[6:9], high=STATE_HIGH[6:9], dtype=np.float32),
+            "phi_theta": spaces.Box(low=STATE_LOW[9:11], high=STATE_HIGH[9:11], dtype=np.float32),
+            "psi": spaces.Box(low=STATE_LOW[11:12], high=STATE_HIGH[11:12], dtype=np.float32),
+            "goal": spaces.Box(low=STATE_LOW[12:], high=STATE_HIGH[12:], dtype=np.float32),
+            # "position": spaces.Box(low=-100, high=100, shape=(3,), dtype=np.float32),
+            # "mach": spaces.Box(low=0, high=np.inf, shape=(1,), dtype=np.float32),
+            # "alpha_beta": spaces.Box(low=-np.pi, high=np.pi, shape=(2,), dtype=np.float32),
+            # "angular_rates": spaces.Box(low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32),
+            # "phi_theta": spaces.Box(low=-np.pi, high=np.pi, shape=(2,), dtype=np.float32),
+            # "psi": spaces.Box(low=-np.pi, high=np.pi, shape=(1,), dtype=np.float32),
+            # "goal": spaces.Box(low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32),
+        })
+
+        # Initialize JSBSim / JSBSim'i başlat
         self.simulation = jsbsim.FGFDMExec(root, None)
         self.simulation.set_debug_level(0)
-
-        # Load F-16 model and set initial conditions
-        # F-16 modelini yükleyin ve başlangıç koşullarını ayarlayın
-        self.simulation.load_model('f16')
+        self.simulation.load_model('f16') # Load F-16 model and set initial conditions / F-16 modelini yükleyin ve başlangıç koşullarını ayarlayın
         self._set_initial_conditions()
         self.simulation.run_ic()
 
@@ -128,9 +119,7 @@ class JSBSimEnv(gym.Env):
         self.dg = 100
         self.viewer = None
 
-    def _set_initial_conditions(self):
-        # Set engines running, forward velocity, and altitude
-        # Motorları çalıştır, ileri hız ve irtifa ayarla
+    def _set_initial_conditions(self):# Set engines running, forward velocity, and altitude / Motorları çalıştır, ileri hız ve irtifa ayarla
         self.simulation.set_property_value('propulsion/set-running', -1)
         self.simulation.set_property_value('ic/u-fps', 900.)
         self.simulation.set_property_value('ic/h-sl-ft', 5000)
@@ -140,68 +129,51 @@ class JSBSimEnv(gym.Env):
     def step(self, action):
         roll_cmd, pitch_cmd, yaw_cmd, throttle = action
 
-        # Pass control inputs to JSBSim
-        # Kontrol girişlerini JSBSim'e aktarın
+        # Pass control inputs to JSBSim / Kontrol girişlerini JSBSim'e aktarın
         self.simulation.set_property_value("fcs/aileron-cmd-norm", roll_cmd)
         self.simulation.set_property_value("fcs/elevator-cmd-norm", pitch_cmd)
         self.simulation.set_property_value("fcs/rudder-cmd-norm", yaw_cmd)
         self.simulation.set_property_value("fcs/throttle-cmd-norm", throttle)
 
-        # We take multiple steps of the simulation per step of the environment
-        # Ortamın bir adımı için simülasyonun birden fazla adımını alıyoruz
+        # We take multiple steps of the simulation per step of the environment / Ortamın bir adımı için simülasyonun birden fazla adımını alıyoruz
         for _ in range(self.down_sample):
-            # Freeze fuel consumption
-            # Yakıt tüketimini dondurun
+            # Freeze fuel consumption / Yakıt tüketimini dondurun
             self.simulation.set_property_value("propulsion/tank/contents-lbs", 1000)
             self.simulation.set_property_value("propulsion/tank[1]/contents-lbs", 1000)
-
-            # Set gear up
-            # Dişlileri yukarı kaldır
+            # Set gear up / Dişlileri yukarı kaldır
             self.simulation.set_property_value("gear/gear-cmd-norm", 0.0)
             self.simulation.set_property_value("gear/gear-pos-norm", 0.0)
-
             self.simulation.run()
-
-        # Get the JSBSim state and save to self.state
-        # JSBSim durumunu alın ve self.state'e kaydedin
+        # Get the JSBSim state and save to self.state / JSBSim durumunu alın ve self.state'e kaydedin
         self._get_state()
-
         reward = 0
         done = False
-
-        # Check for collision with ground
-        # Yerle çarpışma kontrolü
+        # Check for collision with ground / Yerle çarpışma kontrolü
         if self.state[2] < 10:
             reward = -10
             done = True
 
-        # Check if reached goal
-        # Hedefe ulaşıldı mı kontrol edin 
-        if np.sqrt(np.sum((self.state[:2] - self.goal[:2]) ** 2)) < self.dg and abs(
-                self.state[2] - self.goal[2]) < self.dg:
+        # Check if reached goal /  Hedefe ulaşıldı mı kontrol edin 
+        if np.sqrt(np.sum((self.state[:2] - self.goal[:2]) ** 2)) < self.dg and abs(self.state[2] - self.goal[2]) < self.dg:
             reward = 10
             done = True
 
         return np.hstack([self.state, self.goal]), reward, done, {}
 
     def _get_state(self):
-        # Gather all state properties from JSBSim
-        # JSBSim'den tüm durum özelliklerini toplayın
+        # Gather all state properties from JSBSim / JSBSim'den tüm durum özelliklerini toplayın
         for i, property in enumerate(STATE_FORMAT):
             self.state[i] = self.simulation.get_property_value(property)
 
-        # Rough conversion to meters. This should be fine near zero lat/long
-        # Metreye yaklaşık dönüşüm. Bu, sıfıra yakın enlem / boylamda iyi olmalıdır.
+        # Rough conversion to meters. This should be fine near zero lat/long / Metreye yaklaşık dönüşüm. Bu, sıfıra yakın enlem / boylamda iyi olmalıdır.
         self.state[:2] *= RADIUS
 
     def reset(self, seed=None):
-        # Rerun initial conditions in JSBSim
-        # JSBSim'de başlangıç koşullarını yeniden çalıştırın
+        # Rerun initial conditions in JSBSim / JSBSim'de başlangıç koşullarını yeniden çalıştırın
         self.simulation.run_ic()
         self.simulation.set_property_value('propulsion/set-running', -1)
 
-        # Generate a new goal
-        # Yeni bir hedef oluşturun
+        # Generate a new goal / Yeni bir hedef oluşturun
         rng = np.random.default_rng(seed)
         distance = rng.random() * 9000 + 1000
         bearing = rng.random() * 2 * np.pi
@@ -210,9 +182,7 @@ class JSBSimEnv(gym.Env):
         self.goal[:2] = np.cos(bearing), np.sin(bearing)
         self.goal[:2] *= distance
         self.goal[2] = altitude
-
-        # Get state from JSBSim and save to self.state
-        # JSBSim'den durumu alın ve self.state'e kaydedin
+        # Get state from JSBSim and save to self.state / JSBSim'den durumu alın ve self.state'e kaydedin
         self._get_state()
 
         return np.hstack([self.state, self.goal])
@@ -237,22 +207,15 @@ class JSBSimEnv(gym.Env):
             self.viewer.objects.append(self.targetF16)
             self.viewer.objects.append(Grid(self.viewer.ctx, self.viewer.unlit, 21, 1.))
 
-        # Rough conversion from lat/long to meters
-        # Enlem / boylamdan metre cinsinden yaklaşık dönüşüm
+        # Rough conversion from lat/long to meters / Enlem / boylamdan metre cinsinden yaklaşık dönüşüm
         x, y, z = self.state[:3] * scale
-
         self.f16.transform.z = x
         self.f16.transform.x = -y
         self.f16.transform.y = z
-
         rot = Quaternion.from_euler(*self.state[9:])
         rot = Quaternion(rot.w, -rot.y, -rot.z, rot.x)
         self.f16.transform.rotation = rot
-
-        # self.viewer.set_view(-y , z + 1, x - 3, Quaternion.from_euler(np.pi/12, 0, 0, mode=1))
-
         x, y, z = self.goal * scale
-
         self.targetF16.transform.z = x
         self.targetF16.transform.x = -y
         self.targetF16.transform.y = z
@@ -281,20 +244,24 @@ class PositionReward(gym.Wrapper):
     The agent is rewarded based when movin closer to the goal and penalized when moving away.
     Staying at the same distance will result in no additional reward. 
     The gain may be set to weight the importance of this reward.
-    """
-    """
+
     Bu sarmalayıcı JSBSimEnv'e ek bir ödül ekler.
     Temsilci hedefe yaklaştığında ödüllendirilir, uzaklaştığında ise cezalandırılır.
     Aynı mesafede kalmak ek bir ödülle sonuçlanmayacaktır.
     Kazanç, bu ödülün önemine göre ayarlanabilir.
-    """
-    """
-    Bu Python sınıfı, OpenAI Gym çevresini sarmak (wrapper) ve çevrenin her adımında ödülü değiştirmek için tasarlanmış bir PositionReward sarmalayıcısıdır. Bu sarmalayıcı, çevrenin gözlem bilgisini kullanarak belirli bir konumdan uzaklığı ölçer ve bu uzaklık değişikliklerine dayalı olarak ödülü günceller.
+
+    Bu Python sınıfı, OpenAI Gym çevresini sarmak (wrapper) ve çevrenin her adımında ödülü değiştirmek için tasarlanmış bir PositionReward sarmalayıcısıdır. 
+    Bu sarmalayıcı, çevrenin gözlem bilgisini kullanarak belirli bir konumdan uzaklığı ölçer ve bu uzaklık değişikliklerine dayalı olarak ödülü günceller.
     İşlevselliği şu şekildedir:
-    __init__(self, env, gain): Sarmalayıcıyı başlatır. env parametresi, sarmalayıcıya dahil edilecek olan OpenAI Gym çevresidir. gain parametresi, her adımda ödül değişikliğini kontrol eden bir faktördür.
+    __init__(self, env, gain): Sarmalayıcıyı başlatır. 
+    env parametresi, sarmalayıcıya dahil edilecek olan OpenAI Gym çevresidir.
+    gain parametresi, her adımda ödül değişikliğini kontrol eden bir faktördür.
     step(self, action): Çevrenin bir adımını gerçekleştirir ve önceki adımdan bu adıma kadar olan konum değişikliğine dayalı olarak ödülü günceller.
-    reset(self): Çevreyi sıfırlar ve başlangıç konumundaki gözlemi alır. Başlangıçta önceki konum last_distance olarak kaydedilir.
-    Bu sarmalayıcı, her adımda önceki konumdan ne kadar uzaklaşıldığını ölçer ve bu uzaklığa dayalı olarak ödülü günceller. gain parametresi, uzaklık değişikliğinin ödüle olan etkisini kontrol eder. Eğer gain pozitifse, uzaklık arttıkça ödül de artar; eğer negatifse, uzaklık arttıkça ödül azalır.
+    reset(self): Çevreyi sıfırlar ve başlangıç konumundaki gözlemi alır. 
+    Başlangıçta önceki konum last_distance olarak kaydedilir.
+    Bu sarmalayıcı, her adımda önceki konumdan ne kadar uzaklaşıldığını ölçer ve bu uzaklığa dayalı olarak ödülü günceller. 
+    gain parametresi, uzaklık değişikliğinin ödüle olan etkisini kontrol eder. 
+    Eğer gain pozitifse, uzaklık arttıkça ödül de artar; eğer negatifse, uzaklık arttıkça ödül azalır.
     Bu tür sarmalayıcılar, çevrelerin ödül fonksiyonunu özelleştirmek ve öğrenme algoritmalarını belirli bir hedefe odaklamak için kullanılır.
     """
 
@@ -316,23 +283,17 @@ class PositionReward(gym.Wrapper):
         self.last_distance = np.linalg.norm(displacement)
         return obs
 
-
 # Create entry point to wrapped environment
 def wrap_jsbsim(**kwargs):
     return PositionReward(JSBSimEnv(**kwargs), 1e-2)
 
-# Register the wrapped environment
-gym.register(
-    id="JSBSim-v0",
-    entry_point=wrap_jsbsim,
-    max_episode_steps=1200
-)
+
+gym.register(id="JSBSim-v0", entry_point=wrap_jsbsim, max_episode_steps=1200) # Register the wrapped environment
 
 # Short example script to create and run the environment with constant action for 1 simulation second.
 # Ortamı oluşturmak ve sabit eylem için 1 simülasyon saniyesi çalıştırmak için kısa bir örnek komut dosyası.
 if __name__ == "__main__":
     from time import sleep
-
     env = JSBSimEnv()
     env.reset()
     env.render()

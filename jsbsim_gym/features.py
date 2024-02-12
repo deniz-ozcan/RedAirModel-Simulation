@@ -2,29 +2,26 @@ import torch as th
 
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 
-
-
-
 class JSBSimFeatureExtractor(BaseFeaturesExtractor):
     def __init__(self, observation_space):
         super().__init__(observation_space, 17)
 
     def forward(self, observations):
-        position = observations[:, :3]
-        mach = observations[:, 3:4]
-        alpha_beta = observations[:, 4:6]
-        angular_rates = observations[:, 6:9]
-        phi_theta = observations[:, 9:11]
-        psi = observations[:, 11:12]
-        goal = observations[:, 12:]
+        # position = observations[:, :3]
+        # mach = observations[:, 3:4]
+        # alpha_beta = observations[:, 4:6]
+        # angular_rates = observations[:, 6:9]
+        # phi_theta = observations[:, 9:11]
+        # psi = observations[:, 11:12]
+        # goal = observations[:, 12:]
 
-        # position = observations["position"]
-        # mach = observations["mach"]
-        # alpha_beta = observations["alpha_beta"]
-        # angular_rates = observations["angular_rates"]
-        # phi_theta = observations["phi_theta"]
-        # psi = observations["psi"]
-        # goal = observations["goal"]
+        position = observations["position"]
+        mach = observations["mach"]
+        alpha_beta = observations["alpha_beta"]
+        angular_rates = observations["angular_rates"]
+        phi_theta = observations["phi_theta"]
+        psi = observations["psi"]
+        goal = observations["goal"]
 
         displacement = goal - position
         distance = th.sqrt(th.sum(displacement[:, :2] ** 2, 1, True))
@@ -33,12 +30,9 @@ class JSBSimFeatureExtractor(BaseFeaturesExtractor):
         abs_bearing = th.atan2(displacement[:, 1:2], displacement[:, 0:1])
         rel_bearing = abs_bearing - psi
 
-        # We normalize distance this way to bound it between 0 and 1
-        # Mesafeyi 0 ile 1 arasında sınırlandırmak için bu şekilde normalleştiririz.
-        dist_norm = 1 / (1 + distance * 1e-3)
+        dist_norm = 1 / (1 + distance * 1e-3)# We normalize distance this way to bound it between 0 and 1 / Mesafeyi 0 ile 1 arasında sınırlandırmak için bu şekilde normalleştiririz.
 
-        # Normalize these by approximate flight ceiling
-        # Bunları yaklaşık uçuş tavanına göre normalize edin
+        # Normalize these by approximate flight ceiling / Bunları yaklaşık uçuş tavanına göre normalize edin
         dz_norm = dz / 15000
         alt_norm = altitude / 15000
 
@@ -72,8 +66,7 @@ Angular rates are also left unchanged since they are unlikely to grow too large 
 ### Angles
 All angles (attitude, relative bearing, alpha, beta) are converted to sinecosine pairs.
 This makes sure that pi and -pi are the same in the feature space and will produce the same output.
-"""
-"""
+
 JSBSim ortamını öğrenmeye yardımcı olacak özellik çıkarıcı.
 
 ### Konum
@@ -96,8 +89,7 @@ JSBSim modelindeki düşük seviyeli regülatör nedeniyle pratikte çok fazla b
 ### Açılar
 Tüm açılar (tutum, bağıl yön, alfa, beta) sinüs çiftlerine dönüştürülür.
 Bu, pi ve -pi'nin özellik alanında aynı olmasını ve aynı çıktıyı üretmesini sağlar.
-"""
-"""
+
 Bu PyTorch JSBSimFeatureExtractor sınıfı, bir gözlem uzayını (observation space) giriş olarak alır ve bu gözlemleri önceden belirlenmiş bir şekilde işleyip özellik vektörlerine dönüştürür.
 Bu dönüşüm, JSBSim simulasyonundan elde edilen özel bir gözlem formatı üzerinde gerçekleştirilmiştir.
 Bu özellik vektörleri ardından genellikle bir politika ağında veya değer fonksiyonunda kullanılmak üzere tasarlanmıştır.
