@@ -1,3 +1,4 @@
+import random
 import jsbsim
 import gym
 import numpy as np
@@ -119,12 +120,31 @@ class JSBSimEnv(gym.Env):
         self.dg = 100
         self.viewer = None
 
-    def _set_initial_conditions(self):# Set engines running, forward velocity, and altitude / Motorları çalıştır, ileri hız ve irtifa ayarla
-        self.simulation.set_property_value('propulsion/set-running', -1)
-        self.simulation.set_property_value('ic/u-fps', 900.)
-        self.simulation.set_property_value('ic/h-sl-ft', 5000)
 
-        # add different initial cond.
+
+    def _set_initial_conditions(self):# Set engines running, forward velocity, and altitude / Motorları çalıştır, ileri hız ve irtifa ayarla
+        rand = random.random()
+        range10 = random.randint(1, 10)
+        randdeg = random.uniform(0, 360)
+        randfloat = random.uniform(0, 1)
+
+        self.simulation.set_property_value('propulsion/set-running', -1) # motorları daha yavaş çalıştır
+        self.simulation.set_property_value('ic/u-fps', (range10)*(rand * 100))# farklı hızda başlat
+        self.simulation.set_property_value('ic/h-sl-ft', (range10 + 5)*round(rand * 1000)) # farklı bir irtifada başlat
+        
+        self.simulation.set_property_value('ic/psi-true-deg', round(rand * 100, 4))# farklı bir yönle başlat
+        self.simulation.set_property_value('ic/long-gc-deg', -round(randdeg, 4)) # farklı bir boylamda başlat
+        self.simulation.set_property_value('ic/lat-gc-deg', round(randdeg, 4)) # farklı bir enlemde başlat
+        self.simulation.set_property_value('gear/gear-cmd-norm', round(rand, 1)) # Iniş takımı kontrol komutunu ayarla
+        self.simulation.set_property_value('gear/gear-pos-norm', round(rand, 1)) # Iniş takımı pozisyonunu ayarla
+        self.simulation.set_property_value('fcs/aileron-cmd-norm', round(rand, 1)) # Aileron kontrol komutunu ayarla
+        self.simulation.set_property_value('fcs/elevator-cmd-norm', round(rand, 1)) # Elevatör kontrol komutunu ayarla
+        self.simulation.set_property_value('fcs/rudder-cmd-norm', round(rand, 1)) # Rudder kontrol komutunu ayarla
+        self.simulation.set_property_value('fcs/throttle-cmd-norm', round(rand, 1)) # Gaz kontrol komutunu ayarla
+
+        # self.simulation.set_property_value('propulsion/tank/contents-lbs', random.randint(750, 1000)) # Ana yakıt deposundaki yakıt miktarını ayarla
+        # self.simulation.set_property_value('propulsion/tank[1]/contents-lbs', random.randint(500, 750)) # İkincil yakıt deposundaki yakıt miktarını ayarla
+
 
     def step(self, action):
         roll_cmd, pitch_cmd, yaw_cmd, throttle = action
@@ -239,31 +259,6 @@ class JSBSimEnv(gym.Env):
 
 
 class PositionReward(gym.Wrapper):
-    """
-    This wrapper adds an additional reward to the JSBSimEnv.
-    The agent is rewarded based when movin closer to the goal and penalized when moving away.
-    Staying at the same distance will result in no additional reward. 
-    The gain may be set to weight the importance of this reward.
-
-    Bu sarmalayıcı JSBSimEnv'e ek bir ödül ekler.
-    Temsilci hedefe yaklaştığında ödüllendirilir, uzaklaştığında ise cezalandırılır.
-    Aynı mesafede kalmak ek bir ödülle sonuçlanmayacaktır.
-    Kazanç, bu ödülün önemine göre ayarlanabilir.
-
-    Bu Python sınıfı, OpenAI Gym çevresini sarmak (wrapper) ve çevrenin her adımında ödülü değiştirmek için tasarlanmış bir PositionReward sarmalayıcısıdır. 
-    Bu sarmalayıcı, çevrenin gözlem bilgisini kullanarak belirli bir konumdan uzaklığı ölçer ve bu uzaklık değişikliklerine dayalı olarak ödülü günceller.
-    İşlevselliği şu şekildedir:
-    __init__(self, env, gain): Sarmalayıcıyı başlatır. 
-    env parametresi, sarmalayıcıya dahil edilecek olan OpenAI Gym çevresidir.
-    gain parametresi, her adımda ödül değişikliğini kontrol eden bir faktördür.
-    step(self, action): Çevrenin bir adımını gerçekleştirir ve önceki adımdan bu adıma kadar olan konum değişikliğine dayalı olarak ödülü günceller.
-    reset(self): Çevreyi sıfırlar ve başlangıç konumundaki gözlemi alır. 
-    Başlangıçta önceki konum last_distance olarak kaydedilir.
-    Bu sarmalayıcı, her adımda önceki konumdan ne kadar uzaklaşıldığını ölçer ve bu uzaklığa dayalı olarak ödülü günceller. 
-    gain parametresi, uzaklık değişikliğinin ödüle olan etkisini kontrol eder. 
-    Eğer gain pozitifse, uzaklık arttıkça ödül de artar; eğer negatifse, uzaklık arttıkça ödül azalır.
-    Bu tür sarmalayıcılar, çevrelerin ödül fonksiyonunu özelleştirmek ve öğrenme algoritmalarını belirli bir hedefe odaklamak için kullanılır.
-    """
 
     def __init__(self, env, gain):
         super().__init__(env)

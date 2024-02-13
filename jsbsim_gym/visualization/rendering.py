@@ -6,51 +6,12 @@ from jsbsim_gym.visualization.quaternion import Quaternion
 
 dir_name = os.path.abspath(os.path.dirname(__file__))
 
-"""
-Bu Python fonksiyonu, bir OpenGL shader programını yüklemek için kullanılır. 
-Shader programı, genellikle bir vertex shader ve bir fragment shader'ı içerir. 
-Fonksiyon, verilen dosya adlarındaki vertex ve fragment shader kaynak kodlarını okur, 
-OpenGL bağlamı (context) üzerinde bir shader programı oluşturur ve bu programı döndürür.
-
-Fonksiyonun parametreleri şunlardır:
-
-ctx: ModernGL kütüphanesi için bir bağlam nesnesi (context).
-vertex_filename: Vertex shader'ın kaynak kodunu içeren dosyanın adı.
-frag_filename: Fragment shader'ın kaynak kodunu içeren dosyanın adı.
-Fonksiyon, dosyaları okuyarak shader kaynak kodlarını elde eder ve bu kodları kullanarak bir shader programı oluşturur. 
-Oluşturulan shader programı, verilen ctx bağlamına aittir ve vertex ve fragment shader'ları içerir.
-
-Bu tür bir fonksiyon, genellikle grafik uygulamalarında, özellikle 3D rendering için OpenGL kullanıldığında shader programlarını yüklemek ve kullanmak için kullanılır. 
-Shader programları, GPU üzerinde çalışan özel programlar olup, görüntüleme işlemleri ve grafik efektlerinin uygulanmasında önemli bir rol oynar.
-"""
-
 def load_shader(context: mgl.Context, vertex_filename, frag_filename):
     with open(os.path.join(dir_name, vertex_filename)) as f:
         vertex_src = f.read()
     with open(os.path.join(dir_name, frag_filename)) as f:
         frag_src = f.read()
     return context.program(vertex_shader=vertex_src, fragment_shader=frag_src)
-
-"""
-Bu Python fonksiyonu, bir 3D modelin Wavefront OBJ dosyasından yüklenmesini sağlar. 
-Fonksiyon, modelin vertex (nokta), normal (yüzey normali) ve yüz (face) verilerini içeren bir OBJ dosyasını okur ve bu verileri kullanarak bir vertex array object (VAO) oluşturur.
-
-Fonksiyonun parametreleri şunlardır:
-
-program: Modelin render edilmesi için kullanılacak shader program.
-filename: Yüklenmek istenen OBJ dosyasının adı.
-Fonksiyon, dosyayı okurken farklı satır türlerine göre işlem yapar:
-
-v: Vertex (nokta) bilgisi ekler.
-vn: Yüzey normali bilgisi ekler.
-f: Yüz (face) bilgisi ekler.
-Dosyanın diğer satır türleri (örneğin, vt, usemtl, mtllib) işleme dahil edilmez.
-
-Son olarak, oluşturulan vertex ve index verileri kullanılarak bir VAO oluşturulur ve bu VAO, verilen shader programına bağlanarak döndürülür.
-
-Bu tür bir fonksiyon genellikle 3D grafik uygulamalarında kullanılan model yükleme işlemleri için kullanılır. 
-Bu özel fonksiyon, özellikle ModernGL kütüphanesi kullanılarak OpenGL üzerinde çalışan bir uygulamada kullanılmak üzere tasarlanmış gibi görünüyor.
-"""
 
 def load_mesh(ctx: mgl.Context, program, filename):
     v = []
@@ -82,17 +43,6 @@ def load_mesh(ctx: mgl.Context, program, filename):
     ebo = ctx.buffer(np.hstack(indices).flatten().astype(np.uint32).tobytes())
     return ctx.simple_vertex_array(program, vbo, 'aPos', 'aNormal', index_buffer = ebo)
 
-"""
-Bu Python fonksiyonu, bir perspektif projeksiyon matrisini oluşturmak için kullanılır. Perspektif projeksiyon matrisi, 3D sahnedeki nesnelerin bir kameranın bakış açısından nasıl göründüğünü simgeler.
-Fonksiyonun parametreleri şunlardır:
-
-fov: Görüş açısı (Field of View) derece cinsinden. Fonksiyon, bu açıyı kullanarak içsel olarak radyan cinsine çevirir.
-aspect: Görüntü genişliği ile yüksekliği arasındaki oran.
-near: Kamera tarafından görülebilen en yakın nesnenin uzaklığı.
-far: Kamera tarafından görülebilen en uzak nesnenin uzaklığı.
-Fonksiyon, verilen parametrelerle perspektif projeksiyon matrisini oluşturur ve bu matrisi Numpy kütüphanesiyle temsil edilen bir dizi olarak döndürür.
-"""
-
 def perspective(fov, aspect, near, far):
     fov *= np.pi / 180
     right = -np.tan(fov / 2) * near
@@ -102,25 +52,7 @@ def perspective(fov, aspect, near, far):
                     [0, 0, (far + near) / (far - near), -2 * far * near / (far - near)],
                     [0, 0, 1, 0]], dtype=np.float32)
 
-"""
-bir 3D dönüşümü temsil etmek için Transform adlı bir sınıf içerir. Bu sınıf, bir nesnenin pozisyonunu, dönüşünü (rotasyonunu) ve ölçeğini yönetir. 
-Bu sınıf, 3D sahnede nesnelerin pozisyonunu, dönüşünü ve ölçeğini yönetmek için kullanılır.
-Ayrıca, dönüşüm matrisi ve ters dönüşüm matrisi gibi önemli özellikleri sağlar. 
-Transform sınıfı, genellikle grafik programlamada nesnelerin dünyadaki konumlarını ve dönüşlerini temsil etmek için kullanılır.
-İşte sınıfın temel özellikleri:
-
-Pozisyon varsayılan olarak (0, 0, 0) olarak ayarlanır, rotasyon varsayılan olarak bir kimlik dönüşü 
-(Quaternion()) ve ölçek (scale) varsayılan olarak 1 olarak ayarlanır.
-
-position, x, y, z: Pozisyonu temsil eden özellikler. Pozisyonun her bir koordinatı ayrı ayrı get ve set edilebilir.
-rotation: Dönüşü (rotasyonu) temsil eden özellik. Dönüş, bir Quaternion nesnesi olarak saklanır.
-matrix: 3D dönüşüm matrisini döndüren özellik. Pozisyon, dönüş ve ölçek bilgilerini içerir.
-inv_matrix: Ters dönüşüm matrisini döndüren özellik. Nesnenin ters dönüşünü, ters pozisyonunu ve ters ölçeğini içerir.
-Metotlar:
-
-copy: Dönüşümün bir kopyasını oluşturur.
-"""
-class Transform:
+class Transform:# Bu sınıf, 3D sahnede nesnelerin pozisyonunu, dönüşünü ve ölçeğini yönetmek için kullanılır.
     def __init__(self):
         self._position = np.zeros(3)
         self._rotation = Quaternion()
@@ -187,23 +119,8 @@ class Transform:
         return matrix
     # endregion Properties
 
-class RenderObject:
-    """
-    Bu sınıf, 3D sahnede render edilecek nesnelerin temel özelliklerini ve render işlemlerini sağlar. İşte sınıfın temel özellikleri:
-    RenderObject Sınıfı (RenderObject):
-    __init__ fonksiyonu, bir vao (vertex array object) parametresini alır ve sınıfın başlangıç durumunu ayarlar.
-    color değişkeni, nesnenin rengini belirtir. Varsayılan olarak (1.0, 1.0, 1.0) yani beyaz renktir.
-    transform değişkeni, nesnenin pozisyonunu ve dönüşünü temsil eden bir Transform nesnesini içerir.
-    draw_mode değişkeni, nesnenin nasıl çizileceğini belirtir. Varsayılan olarak mgl.TRIANGLES kullanılır.
-    render Fonksiyonu:
-    Bu fonksiyon, nesneyi render etmek için kullanılır.
-    self.vao.program['model'] ifadesi, nesnenin model matrisini shader programına gönderir. Bu, nesnenin pozisyonu ve dönüşünü içerir.
-    self.vao.program['color'] ifadesi, nesnenin rengini shader programına gönderir.
-    self.vao.render(self.draw_mode) ifadesi, vertex array object'in render işlemini başlatır. 
-    self.draw_mode değişkeni, nesnenin çizim modunu belirtir (örneğin, üçgenler şeklinde).
-    Bu sınıf, 3D sahnede çeşitli nesneleri temsil etmek ve bu nesneleri render etmek için temel özellikleri sağlar. 
-    RenderObject sınıfından türetilen diğer sınıflar, özel davranışlar ekleyebilir veya bu sınıfın temel özelliklerini kullanabilir.
-    """
+class RenderObject:# Bu sınıf, 3D sahnede render edilecek nesnelerin temel özelliklerini ve render işlemlerini sağlar.
+
     def __init__(self, vao):
         self.vao = vao
         self.color = 1.0, 1.0, 1.0
@@ -215,30 +132,7 @@ class RenderObject:
         self.vao.program['color'] = self.color
         self.vao.render(self.draw_mode)
 
-
-class Grid(RenderObject):
-    """
-    Bu Python kodu, bir Grid adlı sınıfı içerir. Bu sınıf, bir 3D ızgara oluşturur ve bu ızgarayı render etmek için ModernGL kütüphanesini kullanır. İşte sınıfın temel özellikleri:
-
-    __init__ fonksiyonu, ızgara oluşturmak için gerekli hesaplamaları gerçekleştirir.
-    low ve high değişkenleri, ızgaranın boyutlarına göre sınırları belirler.
-    vertices ve indices listeleri, ızgara noktalarının ve çizgilerin tanımlanması için kullanılır.
-    vertices listesi, ızgara noktalarını içerir.
-    indices listesi, ızgara çizgilerini tanımlar.
-    Noktaların ve çizgilerin tanımlandığı listeler birleştirilip düzenlenir.
-    ModernGL buffer nesneleri oluşturularak bu veriler GPU'ya taşınır.
-    vao (vertex array object), vbo (vertex buffer object) ve ebo (element buffer object) oluşturulur.
-    draw_mode değişkeni, ızgaranın nasıl çizileceğini belirtir (bu durumda mgl.LINES ile çizilir).
-    RenderObject Sınıfından Miras Alma:
-
-    RenderObject sınıfından miras alınmıştır. RenderObject sınıfı, sahnede render edilecek nesnelerin temel özelliklerini içerir.
-    Not:
-
-    RenderObject sınıfının içeriği kod örneğinde verilmemiştir ancak bu sınıfın, sahnede render edilen nesnelerin temel özelliklerini (render fonksiyonu, pozisyon, dönme, vb.) içermesi beklenir.
-    Bu Grid sınıfı, sahnede bir 3D ızgara oluşturmak ve bu ızgarayı render etmek için kullanılır. 
-    Izgara, belirli bir boyutta ve belirli bir aralıkta (spacing) çizgiler içerir.
-    Oluşturulan ızgara, daha büyük bir grafik sahnesinde kullanılabilir.
-    """
+class Grid(RenderObject): # Bu sınıf, bir 3D ızgara oluşturur ve bu ızgarayı render etmek için ModernGL kütüphanesini kullanır.
 
     def __init__(self, ctx: mgl.Context, program, n, spacing):
         super().__init__(None)
@@ -261,40 +155,7 @@ class Grid(RenderObject):
         self.vao = ctx.simple_vertex_array(program, vbo, 'aPos', index_buffer=ebo)
         self.draw_mode = mgl.LINES
 
-
 class Viewer:
-    """
-    3D görüntüleyici (viewer) sınıfını ve bu sınıfın kullanımını içerir. 
-
-    __init__ fonksiyonu, görüntüleyiciyi başlatır ve gerekli ayarları yapar.
-    run fonksiyonu, görüntüleyiciyi çalıştırmak için bir döngü içinde çağrılır.
-    callback fonksiyonu, kullanıcı tarafından tanımlanabilen bir geri çağrıdır (callback). Varsayılan olarak boştur.
-    set_view fonksiyonu, görüntüleyicinin görüntüleme parametrelerini (pozisyon, rotasyon) ayarlar.
-    get_frame fonksiyonu, görüntülenen kareyi alır.
-    render fonksiyonu, sahnede bulunan nesneleri render eder ve ekrana görüntüyü çizer.
-    close fonksiyonu, görüntüleyiciyi kapatır ve kaynakları serbest bırakır.
-    Görüntüleme Konteksi ve Shader Ayarları:
-
-    Görüntüleme konteksi oluşturulur (Pygame ve ModernGL kullanılarak).
-    Shader programları (simple.vert, simple.frag, unlit.frag) yüklenir ve ayarları yapılır.
-    Derinlik testi etkinleştirilir.
-    Görüntüleme Döngüsü:
-
-    run fonksiyonu içinde bir döngü oluşturulur.
-    Döngü içinde, kullanıcı etkileşimleri kontrol edilir (QUIT event'ı dinlenir).
-    Her döngüde callback fonksiyonu çağrılır.
-    Sahnedeki nesneler render edilir (render fonksiyonu).
-    Ekran güncellenir ve FPS (frame per second) kontrolü yapılır.
-    Nesnelerin dönme hareketi için bir Quaternion kullanılır.
-    Transform ve Kamera Ayarları:
-
-    Transform sınıfı, nesnelerin pozisyon ve rotasyonunu temsil eder.
-    Kamera ayarları ve görüntüleme matrisi (projection) oluşturulur.
-    Sahnedeki Nesneler:
-
-    objects listesi, sahnede render edilecek nesneleri içerir.
-    Her bir nesne, sahnede render edilirken çağrılacak render fonksiyonuna sahip olmalıdır.
-    """
 
     def __init__(self, width, height, fps=30, headless=False):
         self.transform = Transform()
@@ -385,22 +246,9 @@ class Viewer:
 
 
 if __name__ == "__main__":
-    """
-    Bu kod bloğu, Transform sınıfının bir örneğini oluşturur, bu örneği belirli bir pozisyon, rotasyon ve ölçekle ayarlar, ardından bu transformasyonun tersini (inv_matrix) ve doğrudan tersini (inv(trans.matrix)) hesaplar. 
-    Sonrasında, bu iki matrisin öğelerinin mutlak değerlerinin toplamını kontrol eder ve bu değerin sıfıra yakın olup olmadığını kontrol eder.
-
-    Bu tür bir kontrol, bir matrisin tersini doğru bir şekilde hesaplayıp hesaplamadığını kontrol etmek için kullanılabilir. 
-    np.sum(np.abs(trans.inv_matrix) - np.abs(inv(trans.matrix))) ifadesi, iki matrisin öğelerinin mutlak değerlerini alıp farklarını hesaplar ve bu farkların toplamını döndürür. Eğer bu toplam sıfıra yakınsa, matrislerin tersleri birbirine eşittir.
-
-    Not: Matris hesaplamalarında kayan nokta hassasiyeti nedeniyle, tam olarak sıfıra eşit olmayan değerlerin ortaya çıkması mümkündür. 
-    Bu nedenle, sıfıra çok yakın bir değerle karşılaştırma (np.allclose gibi) genellikle daha güvenilirdir.
-    """
-
     from numpy.linalg import inv
-
     trans = Transform()
     trans.position = -2, 2, 3
     trans.rotation = Quaternion.from_euler(-.5, -.2, .3)
     trans.scale = 5.0
-
     print(np.sum(np.abs(trans.inv_matrix) - np.abs(inv(trans.matrix))))
