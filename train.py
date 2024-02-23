@@ -12,11 +12,11 @@ env.reset()
 try:
     curr_state = env.reset()
     model = PPO('MultiInputPolicy', env, verbose=1, policy_kwargs=policy_kwargs,  device='cuda')#, tensorboard_log=log_path
-    model.learn(300000)
+    model.learn(1500000)
 except Exception as e:
     gym.logger.error(f"{e}")
 finally:
     model.save("models/jsbsim_sac3")
     model.save_replay_buffer("models/jsbsim_sac_buffer3")
-    
-    #only integers, slices (`:`), ellipsis (`...`), numpy.newaxis (`None`) and integer or boolean arrays are valid indices
+
+# only integers, slices (`:`), ellipsis (`...`), numpy.newaxis (`None`) and integer or boolean arrays are valid indices

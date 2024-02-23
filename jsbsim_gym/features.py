@@ -1,27 +1,39 @@
 import torch as th
-
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
-
 class JSBSimFeatureExtractor(BaseFeaturesExtractor):
+
     def __init__(self, observation_space):
         super().__init__(observation_space, 17)
 
     def forward(self, observations):
-        # position = observations[:, :3]
-        # mach = observations[:, 3:4]
-        # alpha_beta = observations[:, 4:6]
-        # angular_rates = observations[:, 6:9]
-        # phi_theta = observations[:, 9:11]
-        # psi = observations[:, 11:12]
-        # goal = observations[:, 12:]
+        # position = observations[:, :3]#3
+        # mach = observations[:, 3:4]#1
+        # alpha_beta = observations[:, 4:6]#2
+        # angular_rates = observations[:, 6:9]#3
+        # phi_theta = observations[:, 9:11]#2
+        # psi = observations[:, 11:12]#1
+        # goal = observations[:, 12:]#3
+        
+        position_lat_gc_rad=observations["position_lat_gc_rad"]
+        position_long_go_rad=observations["position_long_go_rad"]
+        position_h_sl_meters=observations["position_h_sl_meters"]
+        aero_alpha_rad=observations["aero_alpha_rad"]
+        aero_beta_rad=observations["aero_beta_rad"]
+        velocities_mach=observations["velocities_mach"]
+        velocities_p_rad_sec=observations["velocities_p_rad_sec"]
+        velocities_q_rad_sec=observations["velocities_q_rad_sec"]
+        velocities_r_rad_sec=observations["velocities_r_rad_sec"]
+        phi_rad=observations["attitude/phi-rad"]
+        theta_rad=observations["attitude/theta-rad"]
+        psi_rad=observations["attitude/psi-rad"]
+        goal=observations["goal"]
 
-        position = observations["position"]
-        mach = observations["mach"]
-        alpha_beta = observations["alpha_beta"]
-        angular_rates = observations["angular_rates"]
-        phi_theta = observations["phi_theta"]
-        psi = observations["psi"]
-        goal = observations["goal"]
+        position = th.cat([position_lat_gc_rad, position_long_go_rad, position_h_sl_meters], 1)
+        mach = velocities_mach
+        alpha_beta = th.cat([aero_alpha_rad, aero_beta_rad], 1)
+        angular_rates = th.cat([velocities_p_rad_sec, velocities_q_rad_sec, velocities_r_rad_sec], 1)
+        phi_theta = th.cat([phi_rad, theta_rad], 1)
+        psi = psi_rad
 
         displacement = goal - position
         distance = th.sqrt(th.sum(displacement[:, :2] ** 2, 1, True))
@@ -30,7 +42,8 @@ class JSBSimFeatureExtractor(BaseFeaturesExtractor):
         abs_bearing = th.atan2(displacement[:, 1:2], displacement[:, 0:1])
         rel_bearing = abs_bearing - psi
 
-        dist_norm = 1 / (1 + distance * 1e-3)# We normalize distance this way to bound it between 0 and 1 / Mesafeyi 0 ile 1 arasında sınırlandırmak için bu şekilde normalleştiririz.
+        # We normalize distance this way to bound it between 0 and 1 / Mesafeyi 0 ile 1 arasında sınırlandırmak için bu şekilde normalleştiririz.
+        dist_norm = 1 / (1 + distance * 1e-3)
 
         # Normalize these by approximate flight ceiling / Bunları yaklaşık uçuş tavanına göre normalize edin
         dz_norm = dz / 15000
@@ -40,6 +53,7 @@ class JSBSimFeatureExtractor(BaseFeaturesExtractor):
         cab, sab = th.cos(alpha_beta), th.sin(alpha_beta)
         cpt, spt = th.cos(phi_theta), th.sin(phi_theta)
         cr, sr = th.cos(rel_bearing), th.sin(rel_bearing)
+
         return th.concat([dist_norm, dz_norm, alt_norm, mach, cab, sab, angular_rates, cpt, spt, cr, sr], 1)
 
 

@@ -4,7 +4,6 @@ import gym
 from jsbsim_gym.features import JSBSimFeatureExtractor
 from stable_baselines3 import SAC
 
-
 # JSBSimFeatureExtractor'ı oluştururken gözlem alanını kullan
 policy_kwargs = dict(features_extractor_class=JSBSimFeatureExtractor)
 env = gym.make("JSBSim-v0")

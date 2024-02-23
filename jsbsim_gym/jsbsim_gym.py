@@ -12,7 +12,7 @@ navigation task. The environment terminates when the agent enters a targetF16 ar
 lower than sea level. The goal is initialized at a random location in a targetF16 around the agent's starting
 position.
 
-### Observation The observation is given as the position of the agent, velocity (mach, alpha, beta),
+### Observation Th,
 angular rates, attitude, and position of the goal (concatenated in that order). Units are meters and radians.
 
 ### Action Space
@@ -76,9 +76,8 @@ STATE_FORMAT = [
 STATE_LOW = np.array([-np.inf, -np.inf, 0, 0, -np.pi, -np.pi, -np.inf, -np.inf, -np.inf, -np.pi, -np.pi, -np.pi, -np.inf, -np.inf, 0])
 STATE_HIGH = np.array([np.inf, np.inf, np.inf, np.inf, np.pi, np.pi, np.inf, np.inf, np.inf, np.pi, np.pi, np.pi, np.inf, np.inf, np.inf])
 
-
-# STATE_LOW = np.array([-np.inf, -np.inf, 0, 0, -np.pi, -np.pi, -np.inf, -np.inf, -np.inf, -np.pi, -np.pi, -np.pi, -np.inf, -np.inf, 0], dtype=np.float32)
-# STATE_HIGH = np.array([np.inf, np.inf, np.inf, np.inf, np.pi, np.pi, np.inf, np.inf, np.inf, np.pi, np.pi, np.pi, np.inf, np.inf, np.inf], dtype=np.float32)
+# STATE_LOW = np.array([-np.inf, -np.inf, 0, 0, -np.pi, -np.pi, -np.inf, -np.inf, -np.inf, -np.pi, -np.pi, -np.pi, -np.inf, -np.inf, 0], dtype = np.float32)
+# STATE_HIGH = np.array([np.inf, np.inf, np.inf, np.inf, np.pi, np.pi, np.inf, np.inf, np.inf, np.pi, np.pi, np.pi, np.inf, np.inf, np.inf], dtype = np.float32)
 
 RADIUS = 6.3781e6 # Radius of the earth
 
@@ -86,31 +85,80 @@ class JSBSimEnv(gym.Env):
     def __init__(self, root='.'):
         super().__init__()
 
-        # Set observation and action space format / Gözlem ve eylem alanı biçimini ayarlayın
+        # Sen
         self.action_space = spaces.Box(np.array([-1, -1, -1, 0]), 1, (4,))
         # self.observation_space = spaces.Box(STATE_LOW, STATE_HIGH, (15,))
 
         self.observation_space = spaces.Dict({
-            "position": spaces.Box(low=STATE_LOW[:3], high=STATE_HIGH[:3], dtype=np.float32),
-            "mach": spaces.Box(low=STATE_LOW[3:4], high=STATE_HIGH[3:4], dtype=np.float32),
-            "alpha_beta": spaces.Box(low=STATE_LOW[4:6], high=STATE_HIGH[4:6], dtype=np.float32),
-            "angular_rates": spaces.Box(low=STATE_LOW[6:9], high=STATE_HIGH[6:9], dtype=np.float32),
-            "phi_theta": spaces.Box(low=STATE_LOW[9:11], high=STATE_HIGH[9:11], dtype=np.float32),
-            "psi": spaces.Box(low=STATE_LOW[11:12], high=STATE_HIGH[11:12], dtype=np.float32),
-            "goal": spaces.Box(low=STATE_LOW[12:], high=STATE_HIGH[12:], dtype=np.float32),
-            # "position": spaces.Box(low=-100, high=100, shape=(3,), dtype=np.float32),
-            # "mach": spaces.Box(low=0, high=np.inf, shape=(1,), dtype=np.float32),
-            # "alpha_beta": spaces.Box(low=-np.pi, high=np.pi, shape=(2,), dtype=np.float32),
-            # "angular_rates": spaces.Box(low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32),
-            # "phi_theta": spaces.Box(low=-np.pi, high=np.pi, shape=(2,), dtype=np.float32),
-            # "psi": spaces.Box(low=-np.pi, high=np.pi, shape=(1,), dtype=np.float32),
-            # "goal": spaces.Box(low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32),
+            "position_lat_gc_rad": spaces.Box(low = float('-inf'), high = float('inf'), shape = (1, ), dtype = np.float32),
+            "position_long_go_rad": spaces.Box(low = float('-inf'), high = float('inf'), shape = (1, ), dtype = np.float32),
+            "position_h_sl_meters": spaces.Box(low = 0, high = 15000, shape = (1,), dtype = np.float32),
+            "aero_alpha_rad": spaces.Box(low = -0.2618, high = 0.6109, shape = (1,), dtype = np.float32),
+            "aero_beta_rad": spaces.Box(low = -0.1745, high = 0.2618, shape = (1,), dtype = np.float32),
+            "velocities_mach": spaces.Box(low = 0, high = 2.05, shape = (1,), dtype = np. float32),
+            "velocities_p_rad_sec": spaces.Box(low = -0.52, high = 0.52, shape = (1,), dtype = np.float32),
+            "velocities_q_rad_sec": spaces.Box(low = -0.44, high = 0.44, shape = (1,), dtype = np.float32),
+            "velocities_r_rad_sec": spaces.Box(low = -0.32, high = 0.32, shape = (1,), dtype = np.float32),
+            "attitude/phi-rad": spaces.Box(low = -0.2618, high = 0.2618, shape = (1,), dtype = np.float32),
+            "attitude/theta-rad": spaces.Box(low = -0.2618, high = 0.2618, shape = (1,), dtype = np.float32),
+            "attitude/psi-rad": spaces.Box(low = -3.1416, high = 3.1416, shape = (1,), dtype = np.float32),
+            # "goal": spaces.Box(low = STATE_LOW[12:], high = STATE_HIGH[12:], dtype = np.float32),#x, y, z
         })
+        """
+        position 3
+        alpha_beta 2
+        mach 1
+        angular_rates 3
+        phi_theta 2
+        psi 1
+        goal 3
+        'attitude/pitch-rad'
+        'attitude/roll-rad'
+        'attitude/psi-deg'
+        'aero/beta-deg'
+
+        # velocities
+        'velocities/u-fps'
+        'velocities/v-fps'
+        'velocities/w-fps'
+        'velocities/v-north-fps'
+        'velocities/v-east-fps'
+        'velocities/v-down-fps'
+        'velocities/h-dot-fps'
+
+        # controls state
+        'fcs/left-aileron-pos-norm'
+        'fcs/right-aileron-pos-norm'
+        'fcs/elevator-pos-norm'
+        'fcs/rudder-pos-norm'
+        'fcs/throttle-pos-norm'
+        'gear/gear-pos-norm'
+
+        # engines
+        'propulsion/engine/set-running'
+        'propulsion/set-running'
+        'propulsion/engine/thrust-lbs'
+
+        # controls command
+        'fcs/aileron-cmd-norm'
+        'fcs/elevator-cmd-norm'
+        'fcs/rudder-cmd-norm'
+        'fcs/throttle-cmd-norm'
+        'fcs/mixture-cmd-norm'
+        'fcs/throttle-cmd-norm[1]'
+        'fcs/mixture-cmd-norm[1]'
+        'gear/gear-cmd-norm'
+
+        # simulation
+        'simulation/dt'
+        'simulation/sim-time-sec'
+        """
 
         # Initialize JSBSim / JSBSim'i başlat
         self.simulation = jsbsim.FGFDMExec(root, None)
         self.simulation.set_debug_level(0)
-        self.simulation.load_model('f16') # Load F-16 model and set initial conditions / F-16 modelini yükleyin ve başlangıç koşullarını ayarlayın
+        # Load F-16 model and set initial conditions / F-16 modelini yükleyin ve başlangıç koşullarını ayarlayın
+        self.simulation.load_model('f16') 
         self._set_initial_conditions()
         self.simulation.run_ic()
 
@@ -120,14 +168,27 @@ class JSBSimEnv(gym.Env):
         self.dg = 100
         self.viewer = None
 
-
-
-    def _set_initial_conditions(self):# Set engines running, forward velocity, and altitude / Motorları çalıştır, ileri hız ve irtifa ayarla
+    # Set engines running, forward velocity, and altitude / Motorları çalıştır, ileri hız ve irtifa ayarla
+    def _set_initial_conditions(self):
         rand = random.random()
         range10 = random.randint(1, 10)
         randdeg = random.uniform(0, 360)
-        randfloat = random.uniform(0, 1)
+        """
+        # initial conditions
+        'ic/h-sl-ft'
+        'ic/terrain-elevation-ft'
+        'ic/long-gc-deg'
+        'ic/lat-geod-deg'
+        'ic/u-fps'
+        'ic/v-fps'
+        'ic/w-fps'
+        'ic/p-rad_sec'
+        'ic/q-rad_sec'
+        'ic/r-rad_sec'
+        'ic/roc-fpm'
+        'ic/psi-true-deg'
 
+        """
         self.simulation.set_property_value('propulsion/set-running', -1) # motorları daha yavaş çalıştır
         self.simulation.set_property_value('ic/u-fps', (range10)*(rand * 100))# farklı hızda başlat
         self.simulation.set_property_value('ic/h-sl-ft', (range10 + 5)*round(rand * 1000)) # farklı bir irtifada başlat
@@ -141,10 +202,6 @@ class JSBSimEnv(gym.Env):
         self.simulation.set_property_value('fcs/elevator-cmd-norm', round(rand, 1)) # Elevatör kontrol komutunu ayarla
         self.simulation.set_property_value('fcs/rudder-cmd-norm', round(rand, 1)) # Rudder kontrol komutunu ayarla
         self.simulation.set_property_value('fcs/throttle-cmd-norm', round(rand, 1)) # Gaz kontrol komutunu ayarla
-
-        # self.simulation.set_property_value('propulsion/tank/contents-lbs', random.randint(750, 1000)) # Ana yakıt deposundaki yakıt miktarını ayarla
-        # self.simulation.set_property_value('propulsion/tank[1]/contents-lbs', random.randint(500, 750)) # İkincil yakıt deposundaki yakıt miktarını ayarla
-
 
     def step(self, action):
         roll_cmd, pitch_cmd, yaw_cmd, throttle = action
@@ -181,14 +238,13 @@ class JSBSimEnv(gym.Env):
         return np.hstack([self.state, self.goal]), reward, done, {}
 
     def _get_state(self):
-        # Gather all state properties from JSBSim / JSBSim'den tüm durum özelliklerini toplayın
+        # Gather all state properties from JSBSim
         for i, property in enumerate(STATE_FORMAT):
             self.state[i] = self.simulation.get_property_value(property)
-
-        # Rough conversion to meters. This should be fine near zero lat/long / Metreye yaklaşık dönüşüm. Bu, sıfıra yakın enlem / boylamda iyi olmalıdır.
+        # Rough conversion to meters. This should be fine near zero lat/long
         self.state[:2] *= RADIUS
 
-    def reset(self, seed=None):
+    def reset(self, seed = None):
         # Rerun initial conditions in JSBSim / JSBSim'de başlangıç koşullarını yeniden çalıştırın
         self.simulation.run_ic()
         self.simulation.set_property_value('propulsion/set-running', -1)
@@ -207,7 +263,7 @@ class JSBSimEnv(gym.Env):
 
         return np.hstack([self.state, self.goal])
 
-    def render(self, mode='human'):
+    def render(self, mode = 'human'):
         scale = 1e-3
 
         if self.viewer is None:
@@ -227,7 +283,7 @@ class JSBSimEnv(gym.Env):
             self.viewer.objects.append(self.targetF16)
             self.viewer.objects.append(Grid(self.viewer.ctx, self.viewer.unlit, 21, 1.))
 
-        # Rough conversion from lat/long to meters / Enlem / boylamdan metre cinsinden yaklaşık dönüşüm
+        # Rough conversion from lat/long to meters / yaklaşık dönüşüm
         x, y, z = self.state[:3] * scale
         self.f16.transform.z = x
         self.f16.transform.x = -y
@@ -281,7 +337,6 @@ class PositionReward(gym.Wrapper):
 # Create entry point to wrapped environment
 def wrap_jsbsim(**kwargs):
     return PositionReward(JSBSimEnv(**kwargs), 1e-2)
-
 
 gym.register(id="JSBSim-v0", entry_point=wrap_jsbsim, max_episode_steps=1200) # Register the wrapped environment
 
