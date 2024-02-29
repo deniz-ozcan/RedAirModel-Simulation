@@ -1,46 +1,58 @@
 import torch as th
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
+import datetime
+from math import degrees as deg
+
+
 class JSBSimFeatureExtractor(BaseFeaturesExtractor):
 
     def __init__(self, observation_space):
         super().__init__(observation_space, 17)
+        with open("./Results/F-14A (Maverick&Goose) [Blue] .csv", 'w', encoding = 'utf-8') as f:
+            f.write(f"Time, Longitude, Latitude, Altitude, Roll (deg), Pitch (deg), Yaw (deg)\n")
 
     def forward(self, observations):
-        # position = observations[:, :3]#3
-        # mach = observations[:, 3:4]#1
-        # alpha_beta = observations[:, 4:6]#2
-        # angular_rates = observations[:, 6:9]#3
-        # phi_theta = observations[:, 9:11]#2
-        # psi = observations[:, 11:12]#1
-        # goal = observations[:, 12:]#3
+        p = observations[:, :3]#3
+        mach = observations[:, 3:4]#1
+        alpha_beta = observations[:, 4:6]#2
+        angular_rates = observations[:, 6:9]#3
+        phi_theta = observations[:, 9:11]#2
+        psi = observations[:, 11:12]#1
+        goal = observations[:, 12:]#3
+        # lat = p[0][0], long = p[0][1], alt = p[0][2], roll_d = d(pt[0][0]), pitch_d = d(pt[0][1]), yaw_d = d(psi[0][0])
+        print(f"{datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')}, {p[0][0]}, {p[0][1]}, {p[0][2]}, {deg(psi[0][0])}, {deg(phi_theta[0][1])}, {deg(psi[0][0])}")
+
+        with open("./Results/F-14A (Maverick&Goose) [Blue] .csv", 'a+', encoding = 'utf-8') as f:
+            f.write(f"{datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')}, {p[0][0]}, {p[0][1]}, {p[0][2]}, {deg(psi[0][0])}, {deg(phi_theta[0][1])}, {deg(psi[0][0])}\n")
         
-        position_lat_gc_rad = observations["position_lat_gc_rad"]
-        position_long_go_rad = observations["position_long_go_rad"]
-        position_h_sl_meters = observations["position_h_sl_meters"]
-        aero_alpha_rad = observations["aero_alpha_rad"]
-        aero_beta_rad = observations["aero_beta_rad"]
-        velocities_mach = observations["velocities_mach"]
-        velocities_p_rad_sec = observations["velocities_p_rad_sec"]
-        velocities_q_rad_sec = observations["velocities_q_rad_sec"]
-        velocities_r_rad_sec = observations["velocities_r_rad_sec"]
-        phi_rad = observations["attitude/phi-rad"]
-        theta_rad = observations["attitude/theta-rad"]
-        psi_rad = observations["attitude/psi-rad"]
-        goal_x = observations["goal/x"]
-        goal_y = observations["goal/y"]
-        goal_z = observations["goal/z"]
+        # position_lat_gc_rad = observations["position_lat_gc_rad"]
+        # position_long_go_rad = observations["position_long_go_rad"]
+        # position_h_sl_meters = observations["position_h_sl_meters"]
+        # aero_alpha_rad = observations["aero_alpha_rad"]
+        # aero_beta_rad = observations["aero_beta_rad"]
+        # velocities_mach = observations["velocities_mach"]
+        # velocities_p_rad_sec = observations["velocities_p_rad_sec"]
+        # velocities_q_rad_sec = observations["velocities_q_rad_sec"]
+        # velocities_r_rad_sec = observations["velocities_r_rad_sec"]
+        # phi_rad = observations["attitude/phi-rad"]
+        # theta_rad = observations["attitude/theta-rad"]
+        # psi_rad = observations["attitude/psi-rad"]
+        # goal_x = observations["goal/x"]
+        # goal_y = observations["goal/y"]
+        # goal_z = observations["goal/z"]
 
-        position = th.cat([position_lat_gc_rad, position_long_go_rad, position_h_sl_meters], 1)
-        mach = velocities_mach
-        alpha_beta = th.cat([aero_alpha_rad, aero_beta_rad], 1)
-        angular_rates = th.cat([velocities_p_rad_sec, velocities_q_rad_sec, velocities_r_rad_sec], 1)
-        phi_theta = th.cat([phi_rad, theta_rad], 1)
-        psi = psi_rad
+        # position = th.cat([position_lat_gc_rad, position_long_go_rad, position_h_sl_meters], 1)
+        # mach = velocities_mach
+        # alpha_beta = th.cat([aero_alpha_rad, aero_beta_rad], 1)
+        # angular_rates = th.cat([velocities_p_rad_sec, velocities_q_rad_sec, velocities_r_rad_sec], 1)
+        # phi_theta = th.cat([phi_rad, theta_rad], 1)
+        # psi = psi_rad
 
-        displacement = th.cat([goal_x, goal_y, goal_z], 1) - position
+        # displacement = th.cat([goal_x, goal_y, goal_z], 1) - position
+        displacement = goal - p
         distance = th.sqrt(th.sum(displacement[:, :2] ** 2, 1, True))
         dz = displacement[:, 2:3]
-        altitude = position[:, 2:3]
+        altitude = p[:, 2:3]
         abs_bearing = th.atan2(displacement[:, 1:2], displacement[:, 0:1])
         rel_bearing = abs_bearing - psi
 

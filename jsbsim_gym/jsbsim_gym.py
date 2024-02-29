@@ -87,67 +87,25 @@ class JSBSimEnv(gym.Env):
 
         # Sen
         self.action_space = spaces.Box(np.array([-1, -1, -1, 0]), 1, (4,))
-        # self.observation_space = spaces.Box(STATE_LOW, STATE_HIGH, (15,))
+        self.observation_space = spaces.Box(STATE_LOW, STATE_HIGH, (15,))
 
-        self.observation_space = spaces.Dict({
-            "position_lat_gc_rad": spaces.Box(low = float('-inf'), high = float('inf'), shape = (1, ), dtype = np.float32),
-            "position_long_go_rad": spaces.Box(low = float('-inf'), high = float('inf'), shape = (1, ), dtype = np.float32),
-            "position_h_sl_meters": spaces.Box(low = 0, high = 15000, shape = (1,), dtype = np.float32),
-            "aero_alpha_rad": spaces.Box(low = -0.2618, high = 0.6109, shape = (1,), dtype = np.float32),
-            "aero_beta_rad": spaces.Box(low = -0.1745, high = 0.2618, shape = (1,), dtype = np.float32),
-            "velocities_mach": spaces.Box(low = 0, high = 2.05, shape = (1,), dtype = np. float32),
-            "velocities_p_rad_sec": spaces.Box(low = -0.52, high = 0.52, shape = (1,), dtype = np.float32),
-            "velocities_q_rad_sec": spaces.Box(low = -0.44, high = 0.44, shape = (1,), dtype = np.float32),
-            "velocities_r_rad_sec": spaces.Box(low = -0.32, high = 0.32, shape = (1,), dtype = np.float32),
-            "attitude/phi-rad": spaces.Box(low = -0.2618, high = 0.2618, shape = (1,), dtype = np.float32),
-            "attitude/theta-rad": spaces.Box(low = -0.2618, high = 0.2618, shape = (1,), dtype = np.float32),
-            "attitude/psi-rad": spaces.Box(low = -3.1416, high = 3.1416, shape = (1,), dtype = np.float32),
-            "goal/x": spaces.Box(low = STATE_LOW[12:13], high = STATE_HIGH[12:13], dtype = np.float32),
-            "goal/y": spaces.Box(low = STATE_LOW[13:14], high = STATE_HIGH[13:14], dtype = np.float32),
-            "goal/z": spaces.Box(low = STATE_LOW[14:15], high = STATE_HIGH[14:15], dtype = np.float32),
-        })
-        """
-        'attitude/pitch-rad'
-        'attitude/roll-rad'
-        'attitude/psi-deg'
-        'aero/beta-deg'
-
-        # velocities
-        'velocities/u-fps'
-        'velocities/v-fps'
-        'velocities/w-fps'
-        'velocities/v-north-fps'
-        'velocities/v-east-fps'
-        'velocities/v-down-fps'
-        'velocities/h-dot-fps'
-
-        # controls state
-        'fcs/left-aileron-pos-norm'
-        'fcs/right-aileron-pos-norm'
-        'fcs/elevator-pos-norm'
-        'fcs/rudder-pos-norm'
-        'fcs/throttle-pos-norm'
-        'gear/gear-pos-norm'
-
-        # engines
-        'propulsion/engine/set-running'
-        'propulsion/set-running'
-        'propulsion/engine/thrust-lbs'
-
-        # controls command
-        'fcs/aileron-cmd-norm'
-        'fcs/elevator-cmd-norm'
-        'fcs/rudder-cmd-norm'
-        'fcs/throttle-cmd-norm'
-        'fcs/mixture-cmd-norm'
-        'fcs/throttle-cmd-norm[1]'
-        'fcs/mixture-cmd-norm[1]'
-        'gear/gear-cmd-norm'
-
-        # simulation
-        'simulation/dt'
-        'simulation/sim-time-sec'
-        """
+        # self.observation_space = spaces.Dict({
+        #     "position_lat_gc_rad": spaces.Box(low = float('-inf'), high = float('inf'), shape = (1, ), dtype = np.float32),
+        #     "position_long_go_rad": spaces.Box(low = float('-inf'), high = float('inf'), shape = (1, ), dtype = np.float32),
+        #     "position_h_sl_meters": spaces.Box(low = 0, high = 15000, shape = (1,), dtype = np.float32),
+        #     "aero_alpha_rad": spaces.Box(low = -0.2618, high = 0.6109, shape = (1,), dtype = np.float32),
+        #     "aero_beta_rad": spaces.Box(low = -0.1745, high = 0.2618, shape = (1,), dtype = np.float32),
+        #     "velocities_mach": spaces.Box(low = 0, high = 2.05, shape = (1,), dtype = np. float32),
+        #     "velocities_p_rad_sec": spaces.Box(low = -0.52, high = 0.52, shape = (1,), dtype = np.float32),
+        #     "velocities_q_rad_sec": spaces.Box(low = -0.44, high = 0.44, shape = (1,), dtype = np.float32),
+        #     "velocities_r_rad_sec": spaces.Box(low = -0.32, high = 0.32, shape = (1,), dtype = np.float32),
+        #     "attitude/phi-rad": spaces.Box(low = -0.2618, high = 0.2618, shape = (1,), dtype = np.float32),
+        #     "attitude/theta-rad": spaces.Box(low = -0.2618, high = 0.2618, shape = (1,), dtype = np.float32),
+        #     "attitude/psi-rad": spaces.Box(low = -3.1416, high = 3.1416, shape = (1,), dtype = np.float32),
+        #     "goal/x": spaces.Box(low = STATE_LOW[12:13], high = STATE_HIGH[12:13], dtype = np.float32),
+        #     "goal/y": spaces.Box(low = STATE_LOW[13:14], high = STATE_HIGH[13:14], dtype = np.float32),
+        #     "goal/z": spaces.Box(low = STATE_LOW[14:15], high = STATE_HIGH[14:15], dtype = np.float32),
+        # })
 
         # Initialize JSBSim / JSBSim'i başlat
         self.simulation = jsbsim.FGFDMExec(root, None)
@@ -168,35 +126,22 @@ class JSBSimEnv(gym.Env):
         rand = random.random()
         range10 = random.randint(1, 10)
         randdeg = random.uniform(0, 360)
-        """
-        # initial conditions
-        'ic/h-sl-ft'
-        'ic/terrain-elevation-ft'
-        'ic/long-gc-deg'
-        'ic/lat-geod-deg'
-        'ic/u-fps'
-        'ic/v-fps'
-        'ic/w-fps'
-        'ic/p-rad_sec'
-        'ic/q-rad_sec'
-        'ic/r-rad_sec'
-        'ic/roc-fpm'
-        'ic/psi-true-deg'
-
-        """
         self.simulation.set_property_value('propulsion/set-running', -1) # motorları daha yavaş çalıştır
-        self.simulation.set_property_value('ic/u-fps', (range10)*(rand * 100))# farklı hızda başlat
-        self.simulation.set_property_value('ic/h-sl-ft', (range10 + 5)*round(rand * 1000)) # farklı bir irtifada başlat
+        self.simulation.set_property_value('ic/u-fps', 900.)
+        self.simulation.set_property_value('ic/h-sl-ft', 5000)
         
-        self.simulation.set_property_value('ic/psi-true-deg', round(rand * 100, 4))# farklı bir yönle başlat
-        self.simulation.set_property_value('ic/long-gc-deg', -round(randdeg, 4)) # farklı bir boylamda başlat
-        self.simulation.set_property_value('ic/lat-gc-deg', round(randdeg, 4)) # farklı bir enlemde başlat
-        self.simulation.set_property_value('gear/gear-cmd-norm', round(rand, 1)) # Iniş takımı kontrol komutunu ayarla
-        self.simulation.set_property_value('gear/gear-pos-norm', round(rand, 1)) # Iniş takımı pozisyonunu ayarla
-        self.simulation.set_property_value('fcs/aileron-cmd-norm', round(rand, 1)) # Aileron kontrol komutunu ayarla
-        self.simulation.set_property_value('fcs/elevator-cmd-norm', round(rand, 1)) # Elevatör kontrol komutunu ayarla
-        self.simulation.set_property_value('fcs/rudder-cmd-norm', round(rand, 1)) # Rudder kontrol komutunu ayarla
-        self.simulation.set_property_value('fcs/throttle-cmd-norm', round(rand, 1)) # Gaz kontrol komutunu ayarla
+        # self.simulation.set_property_value('ic/u-fps', (range10)*(rand * 100))# farklı hızda başlat
+        # self.simulation.set_property_value('ic/h-sl-ft', (range10 + 5)*round(rand * 1000)) # farklı bir irtifada başlat
+        
+        # self.simulation.set_property_value('ic/psi-true-deg', round(rand * 100, 4))# farklı bir yönle başlat
+        # self.simulation.set_property_value('ic/long-gc-deg', -round(randdeg, 4)) # farklı bir boylamda başlat
+        # self.simulation.set_property_value('ic/lat-gc-deg', round(randdeg, 4)) # farklı bir enlemde başlat
+        # self.simulation.set_property_value('gear/gear-cmd-norm', round(rand, 1)) # Iniş takımı kontrol komutunu ayarla
+        # self.simulation.set_property_value('gear/gear-pos-norm', round(rand, 1)) # Iniş takımı pozisyonunu ayarla
+        # self.simulation.set_property_value('fcs/aileron-cmd-norm', round(rand, 1)) # Aileron kontrol komutunu ayarla
+        # self.simulation.set_property_value('fcs/elevator-cmd-norm', round(rand, 1)) # Elevatör kontrol komutunu ayarla
+        # self.simulation.set_property_value('fcs/rudder-cmd-norm', round(rand, 1)) # Rudder kontrol komutunu ayarla
+        # self.simulation.set_property_value('fcs/throttle-cmd-norm', round(rand, 1)) # Gaz kontrol komutunu ayarla
 
     def step(self, action):
         roll_cmd, pitch_cmd, yaw_cmd, throttle = action
@@ -267,12 +212,12 @@ class JSBSimEnv(gym.Env):
             f16_mesh = load_mesh(self.viewer.ctx, self.viewer.prog, "f16.obj")
             self.f16 = RenderObject(f16_mesh)
             self.f16.transform.scale = 1 / 30
-            self.f16.color = 0, 0, .4
+            self.f16.color = 0, 1, 0
 
             goal_mesh = load_mesh(self.viewer.ctx, self.viewer.prog, "f16.obj")
             self.targetF16 = RenderObject(goal_mesh)
             self.targetF16.transform.scale = 1 / 30
-            self.targetF16.color = 0, .4, 0
+            self.targetF16.color = 1, 0, 0
 
             self.viewer.objects.append(self.f16)
             self.viewer.objects.append(self.targetF16)
@@ -288,7 +233,7 @@ class JSBSimEnv(gym.Env):
         self.f16.transform.rotation = rot
         x, y, z = self.goal * scale
         self.targetF16.transform.z = x
-        self.targetF16.transform.x = -y
+        self.targetF16.transform.x = y
         self.targetF16.transform.y = z
 
         r = self.f16.transform.position - self.targetF16.transform.position
