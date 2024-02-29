@@ -3,15 +3,16 @@ import gym
 from jsbsim_gym.features import JSBSimFeatureExtractor
 from stable_baselines3 import SAC, PPO, DQN
 import numpy as np
+from os import path
 
 policy_kwargs = dict(features_extractor_class=JSBSimFeatureExtractor)
 env = gym.make("JSBSim-v0")
 env.reset()
 
-# log_path = path.join(path.abspath(path.dirname(__file__)), 'logs')
+log_path = path.join(path.abspath(path.dirname(__file__)), 'logs')
 try:
     curr_state = env.reset()
-    model = PPO('MultiInputPolicy', env, verbose=1, policy_kwargs=policy_kwargs,  device='cuda')#, tensorboard_log=log_path
+    model = SAC('MultiInputPolicy', env, verbose=1, policy_kwargs=policy_kwargs,  gradient_steps = -1, device='cuda')#tensorboard_log = log_path,
     model.learn(1500000)
 except Exception as e:
     gym.logger.error(f"{e}")

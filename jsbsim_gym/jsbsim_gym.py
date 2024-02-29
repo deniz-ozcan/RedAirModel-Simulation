@@ -102,16 +102,11 @@ class JSBSimEnv(gym.Env):
             "attitude/phi-rad": spaces.Box(low = -0.2618, high = 0.2618, shape = (1,), dtype = np.float32),
             "attitude/theta-rad": spaces.Box(low = -0.2618, high = 0.2618, shape = (1,), dtype = np.float32),
             "attitude/psi-rad": spaces.Box(low = -3.1416, high = 3.1416, shape = (1,), dtype = np.float32),
-            # "goal": spaces.Box(low = STATE_LOW[12:], high = STATE_HIGH[12:], dtype = np.float32),#x, y, z
+            "goal/x": spaces.Box(low = STATE_LOW[12:13], high = STATE_HIGH[12:13], dtype = np.float32),
+            "goal/y": spaces.Box(low = STATE_LOW[13:14], high = STATE_HIGH[13:14], dtype = np.float32),
+            "goal/z": spaces.Box(low = STATE_LOW[14:15], high = STATE_HIGH[14:15], dtype = np.float32),
         })
         """
-        position 3
-        alpha_beta 2
-        mach 1
-        angular_rates 3
-        phi_theta 2
-        psi 1
-        goal 3
         'attitude/pitch-rad'
         'attitude/roll-rad'
         'attitude/psi-deg'

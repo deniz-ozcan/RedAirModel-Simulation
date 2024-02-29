@@ -14,19 +14,21 @@ class JSBSimFeatureExtractor(BaseFeaturesExtractor):
         # psi = observations[:, 11:12]#1
         # goal = observations[:, 12:]#3
         
-        position_lat_gc_rad=observations["position_lat_gc_rad"]
-        position_long_go_rad=observations["position_long_go_rad"]
-        position_h_sl_meters=observations["position_h_sl_meters"]
-        aero_alpha_rad=observations["aero_alpha_rad"]
-        aero_beta_rad=observations["aero_beta_rad"]
-        velocities_mach=observations["velocities_mach"]
-        velocities_p_rad_sec=observations["velocities_p_rad_sec"]
-        velocities_q_rad_sec=observations["velocities_q_rad_sec"]
-        velocities_r_rad_sec=observations["velocities_r_rad_sec"]
-        phi_rad=observations["attitude/phi-rad"]
-        theta_rad=observations["attitude/theta-rad"]
-        psi_rad=observations["attitude/psi-rad"]
-        goal=observations["goal"]
+        position_lat_gc_rad = observations["position_lat_gc_rad"]
+        position_long_go_rad = observations["position_long_go_rad"]
+        position_h_sl_meters = observations["position_h_sl_meters"]
+        aero_alpha_rad = observations["aero_alpha_rad"]
+        aero_beta_rad = observations["aero_beta_rad"]
+        velocities_mach = observations["velocities_mach"]
+        velocities_p_rad_sec = observations["velocities_p_rad_sec"]
+        velocities_q_rad_sec = observations["velocities_q_rad_sec"]
+        velocities_r_rad_sec = observations["velocities_r_rad_sec"]
+        phi_rad = observations["attitude/phi-rad"]
+        theta_rad = observations["attitude/theta-rad"]
+        psi_rad = observations["attitude/psi-rad"]
+        goal_x = observations["goal/x"]
+        goal_y = observations["goal/y"]
+        goal_z = observations["goal/z"]
 
         position = th.cat([position_lat_gc_rad, position_long_go_rad, position_h_sl_meters], 1)
         mach = velocities_mach
@@ -35,7 +37,7 @@ class JSBSimFeatureExtractor(BaseFeaturesExtractor):
         phi_theta = th.cat([phi_rad, theta_rad], 1)
         psi = psi_rad
 
-        displacement = goal - position
+        displacement = th.cat([goal_x, goal_y, goal_z], 1) - position
         distance = th.sqrt(th.sum(displacement[:, :2] ** 2, 1, True))
         dz = displacement[:, 2:3]
         altitude = position[:, 2:3]
