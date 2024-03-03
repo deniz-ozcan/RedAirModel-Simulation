@@ -161,7 +161,6 @@ cython_debug/
 *.pdf
 /logs
 /models
-/Results
 *.jpeg
 *.jpg
 *.png
