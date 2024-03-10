@@ -8,7 +8,9 @@ from gym import spaces
 import torch as th
 from math import degrees as deg
 import datetime
-
+"""
+hedefin de enlem, boylam ve irtifa bilgileri olacak
+"""
 
 STATE_FORMAT = [
     "position/lat-gc-rad", "position/long-gc-rad", "position/h-sl-meters", 
@@ -22,11 +24,7 @@ class JSBSimEnv(gym.Env):
         super().__init__()
         with open("./Results/F-14A (Maverick&Goose) [Blue] .csv", 'w', encoding = 'utf-8') as f:
             f.write(f"Time, Longitude, Latitude, Altitude, Roll (deg), Pitch (deg), Yaw (deg)\n")
-
         self.action_space = spaces.Box(np.array([-1, -1, -1, 0]), 1, (4,))
-        """
-        hedefin de enlem, boylam ve irtifa bilgileri olacak
-        """
         self.observation_space = spaces.Dict({
             "position_lat_gc_rad": spaces.Box(low = float('-inf'), high = float('inf'), shape = (1, ), dtype = np.float32),
             "position_long_gc_rad": spaces.Box(low = float('-inf'), high = float('inf'), shape = (1, ), dtype = np.float32),
@@ -54,7 +52,6 @@ class JSBSimEnv(gym.Env):
         self.simulation.run_ic()
 
         self.down_sample = 4
-        # self.state = np.zeros(12)
         self.goal = np.zeros(3)
         self.dg = 100
         self.viewer = None
@@ -100,7 +97,6 @@ class JSBSimEnv(gym.Env):
             self.simulation.set_property_value("gear/gear-cmd-norm", 0.0)
             self.simulation.set_property_value("gear/gear-pos-norm", 0.0)
             self.simulation.run()
-        # Get the JSBSim state and save to self.state / JSBSim durumunu alın ve self.state'e kaydedin
 
         reward, done = 0, False
         obs = self._get_state()
@@ -121,7 +117,6 @@ class JSBSimEnv(gym.Env):
         goal_y = obs["goal_y"]
         goal_z = obs["goal_z"]
 
-        # hedefe gelme
         if np.sqrt((current_x - goal_x) ** 2 + (current_y - goal_y) ** 2) < self.dg and abs(current_z - goal_z) < self.dg:
             print("reached")
             reward = 10000
@@ -131,17 +126,7 @@ class JSBSimEnv(gym.Env):
             reward = -10
             done = True
         
-        # reward = 0
-        # done = False
-        # # Check for collision with ground / Yerle çarpışma kontrolü
-        # if self.state[2] < 10:
-            
-        # # Check if reached goal /  Hedefe ulaşıldı mı kontrol edin 
-        # if np.sqrt(np.sum((self.state[:2] - self.goal[:2]) ** 2)) < self.dg and abs(self.state[2] - self.goal[2]) < self.dg:
-        #     reward = 10
-        #     done = True
-
-        return obs, reward, done, {} #np.hstack([self.state, self.goal]), reward, done, {}
+        return obs, reward, done, {} 
 
     def _get_state(self):
         obs = {
@@ -185,7 +170,6 @@ class JSBSimEnv(gym.Env):
         self.goal[:2] = np.cos(bearing), np.sin(bearing)
         self.goal[:2] *= distance
         self.goal[2] = altitude
-        # Get state from JSBSim and save to self.state / JSBSim'den durumu alın ve self.state'e kaydedin
 
         return self._get_state()
 
@@ -206,23 +190,20 @@ class JSBSimEnv(gym.Env):
             self.viewer.objects.append(self.targetF16)
             self.viewer.objects.append(Grid(self.viewer.ctx, self.viewer.unlit, 21, 1.))
 
+        # Rough conversion from lat/long to meters / yaklaşık dönüşüm
         obs = self._get_state()
-        
         x = obs["position_lat_gc_rad"] * scale
         y = obs["position_long_gc_rad"] * scale
         z = obs["position_h_sl_meters"] * scale
 
-        # Rough conversion from lat/long to meters / yaklaşık dönüşüm
+        self.f16.transform.z = x
+        self.f16.transform.x = -y
+        self.f16.transform.y = z
+
         rot = Quaternion.from_euler(obs["attitude_phi_rad"], obs["attitude_theta_rad"], obs["attitude_psi_rad"])
         rot = Quaternion(rot.w, -rot.y, -rot.z, rot.x)
         self.f16.transform.rotation = rot
 
-        self.f16.transform.z = x
-        self.f16.transform.x = -y
-        self.f16.transform.y = z
-        
-        self.f16.transform.rotation = rot
-        
         x, y, z = self.goal * scale
         self.targetF16.transform.z = x
         self.targetF16.transform.x = -y
@@ -230,7 +211,7 @@ class JSBSimEnv(gym.Env):
 
         r = self.f16.transform.position - self.targetF16.transform.position
         rhat = r/np.linalg.norm(r)
-        x,y,z = r
+        x, y, z = r
         yaw = np.arctan2(-x,-z)
         pitch = np.arctan2(-y, np.sqrt(x*2 + z*2))
 
