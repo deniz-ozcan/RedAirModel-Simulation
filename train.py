@@ -7,8 +7,6 @@ from os import path
 
 policy_kwargs = dict(features_extractor_class=JSBSimFeatureExtractor)
 env = gym.make("JSBSim-v0")
-env.reset()
-
 # log_path = path.join(path.abspath(path.dirname(__file__)), 'logs')
 try:
     curr_state = env.reset()
@@ -17,5 +15,5 @@ try:
 except Exception as e:
     gym.logger.error(f"{e}")
 finally:
-    model.save("models/jsbsim_sac3")
-    model.save_replay_buffer("models/jsbsim_sac_buffer3")
+    model.save("models/jsbsim_sac")
+    model.save_replay_buffer("models/jsbsim_sac_buffer")

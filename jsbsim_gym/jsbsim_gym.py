@@ -22,8 +22,14 @@ RADIUS = 6.3781e6 # Radius of the earth
 class JSBSimEnv(gym.Env):
     def __init__(self, root='.'):
         super().__init__()
-        with open("./Results/F-14A (Maverick&Goose) [Blue] .csv", 'w', encoding = 'utf-8') as f:
-            f.write(f"Time, Longitude, Latitude, Altitude, Roll (deg), Pitch (deg), Yaw (deg)\n")
+        self.dateObj = datetime.datetime.now()
+        initial_values =f"""FileType=text/acmi/tacview
+FileVersion=2.1
+0,ReferenceTime={self.dateObj.strftime('%Y-%m-%dT%H:%M:%SZ')}
+0,ReferenceLongitude=0.0
+0,ReferenceLatitude=0.0"""
+        with open("./Results/F-14A (Maverick&Goose) [Blue] .acmi", 'w', encoding = 'utf-8') as f:
+            f.write(initial_values)
         self.action_space = spaces.Box(np.array([-1, -1, -1, 0]), 1, (4,))
         self.observation_space = spaces.Dict({
             "position_lat_gc_rad": spaces.Box(low = float('-inf'), high = float('inf'), shape = (1, ), dtype = np.float32),
@@ -46,7 +52,6 @@ class JSBSimEnv(gym.Env):
         # Initialize JSBSim / JSBSim'i başlat
         self.simulation = jsbsim.FGFDMExec(root, None)
         self.simulation.set_debug_level(0)
-        # Load F-16 model and set initial conditions / F-16 modelini yükleyin ve başlangıç koşullarını ayarlayın
         self.simulation.load_model('f16') 
         self._set_initial_conditions()
         self.simulation.run_ic()
@@ -56,28 +61,16 @@ class JSBSimEnv(gym.Env):
         self.dg = 100
         self.viewer = None
 
-    # Set engines running, forward velocity, and altitude / Motorları çalıştır, ileri hız ve irtifa ayarla
     def _set_initial_conditions(self):
         rand = random.random()
         range10 = random.randint(1, 10)
         randdeg = random.uniform(0, 360)
         self.simulation.set_property_value('propulsion/set-running', -1) # motorları daha yavaş çalıştır
         self.simulation.set_property_value('ic/u-fps', 900.)
-        # self.simulation.set_property_value('ic/h-sl-ft', 5000)
-        
-        # self.simulation.set_property_value('ic/u-fps', (range10)*(rand * 100))# farklı hızda başlat
         self.simulation.set_property_value('ic/h-sl-ft', (range10 + 5)*round(rand * 1000)) # farklı bir irtifada başlat
-        
         self.simulation.set_property_value('ic/psi-true-deg', round(rand * 100, 4))# farklı bir yönle başlat
         self.simulation.set_property_value('ic/long-gc-deg', -round(randdeg, 4)) # farklı bir boylamda başlat
         self.simulation.set_property_value('ic/lat-gc-deg', round(randdeg, 4)) # farklı bir enlemde başlat
-        self.simulation.set_property_value('gear/gear-cmd-norm', -1) # Iniş takımı kontrol komutunu ayarla
-        self.simulation.set_property_value('gear/gear-pos-norm', -1) # Iniş takımı pozisyonunu ayarla
-
-        # self.simulation.set_property_value('fcs/aileron-cmd-norm', round(rand, 1)) # Aileron kontrol komutunu ayarla
-        # self.simulation.set_property_value('fcs/elevator-cmd-norm', round(rand, 1)) # Elevatör kontrol komutunu ayarla
-        # self.simulation.set_property_value('fcs/rudder-cmd-norm', round(rand, 1)) # Rudder kontrol komutunu ayarla
-        # self.simulation.set_property_value('fcs/throttle-cmd-norm', round(rand, 1)) # Gaz kontrol komutunu ayarla
 
     def step(self, action):
         roll_cmd, pitch_cmd, yaw_cmd, throttle = action
@@ -100,32 +93,36 @@ class JSBSimEnv(gym.Env):
 
         reward, done = 0, False
         obs = self._get_state()
-        pos_x_deg = self.simulation.get_property_value('position/long-gc-deg')
-        pos_y_deg = self.simulation.get_property_value('position/lat-geod-deg')
-        pos_z = self.simulation.get_property_value('position/h-sl-meters')
+        longitude = self.simulation.get_property_value('position/long-gc-deg')
+        latitude = self.simulation.get_property_value('position/lat-geod-deg')
+        altitude = self.simulation.get_property_value('position/h-sl-meters')
         theta_rad = self.simulation.get_property_value("attitude/roll-rad")
         phi_rad = self.simulation.get_property_value("attitude/pitch-rad")
         psi_rad = self.simulation.get_property_value("attitude/psi-deg")
-
-        with open("./Results/F-14A (Maverick&Goose) [Blue] .csv", 'a+', encoding = 'utf-8') as f:
-            f.write(f"{datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')}, {pos_x_deg}, {pos_y_deg}, {pos_z}, {deg(theta_rad)}, {deg(phi_rad)}, {psi_rad}\n")
-
         current_x = obs["position_lat_gc_rad"]
         current_y = obs["position_long_gc_rad"]
         current_z = obs["position_h_sl_meters"]
         goal_x = obs["goal_x"]
         goal_y = obs["goal_y"]
         goal_z = obs["goal_z"]
+        date = self.dateObj.strftime('%Y-%m-%dT%H:%M:%SZ').replace("-", "")[0:8]
+        rn = f"F{date}" 
+        rn2 = f"E{date}" 
+        with open("./Results/F-14A (Maverick&Goose) [Blue] .acmi", 'a+', encoding = 'utf-8') as f:
+            f.write(f"""
+#{round((datetime.datetime.now() - self.dateObj).total_seconds(), 2)}
+{rn},T={longitude}|{latitude}|{altitude}|{deg(theta_rad)}|{deg(phi_rad)}|{psi_rad},Name=F-16C-52,Type=Air+FixedWing,Color=Red
+{rn2},T={deg(goal_x[0])}|{deg(goal_y[0])}|{deg(goal_z[0])},Name=F-16C-52,Type=Air+FixedWing,Color=Yellow""")
 
         if np.sqrt((current_x - goal_x) ** 2 + (current_y - goal_y) ** 2) < self.dg and abs(current_z - goal_z) < self.dg:
             print("reached")
             reward = 10000
             done = True
-        
+
         if obs["position_h_sl_meters"] < 10:
             reward = -10
             done = True
-        
+
         return obs, reward, done, {} 
 
     def _get_state(self):
@@ -208,7 +205,6 @@ class JSBSimEnv(gym.Env):
         self.targetF16.transform.z = x
         self.targetF16.transform.x = -y
         self.targetF16.transform.y = z
-
         r = self.f16.transform.position - self.targetF16.transform.position
         rhat = r/np.linalg.norm(r)
         x, y, z = r
@@ -220,7 +216,7 @@ class JSBSimEnv(gym.Env):
 
         if mode == 'rgb_array':
             return self.viewer.get_frame()
-    
+
     def close(self):
         if self.viewer is not None:
             self.viewer.close()
