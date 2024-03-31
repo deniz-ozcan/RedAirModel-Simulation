@@ -52,7 +52,7 @@ def perspective(fov, aspect, near, far):
                     [0, 0, (far + near) / (far - near), -2 * far * near / (far - near)],
                     [0, 0, 1, 0]], dtype=np.float32)
 
-class Transform:# Bu sınıf, 3D sahnede nesnelerin pozisyonunu, dönüşünü ve ölçeğini yönetmek için kullanılır.
+class Transform:
     def __init__(self):
         self._position = np.zeros(3)
         self._rotation = Quaternion()
@@ -96,8 +96,8 @@ class Transform:# Bu sınıf, 3D sahnede nesnelerin pozisyonunu, dönüşünü v
         return self._rotation.copy()
 
     @rotation.setter
-    def rotation(self, rotation):
-        self._rotation._arr[:] = rotation._arr
+    def rotation(self, rotation: Quaternion):
+        self._rotation._arr = rotation._arr.reshape(-1)
 
     @property
     def matrix(self):
@@ -119,7 +119,7 @@ class Transform:# Bu sınıf, 3D sahnede nesnelerin pozisyonunu, dönüşünü v
         return matrix
     # endregion Properties
 
-class RenderObject:# Bu sınıf, 3D sahnede render edilecek nesnelerin temel özelliklerini ve render işlemlerini sağlar.
+class RenderObject:
 
     def __init__(self, vao):
         self.vao = vao
@@ -132,7 +132,7 @@ class RenderObject:# Bu sınıf, 3D sahnede render edilecek nesnelerin temel öz
         self.vao.program['color'] = self.color
         self.vao.render(self.draw_mode)
 
-class Grid(RenderObject): # Bu sınıf, bir 3D ızgara oluşturur ve bu ızgarayı render etmek için ModernGL kütüphanesini kullanır.
+class Grid(RenderObject):
 
     def __init__(self, ctx: mgl.Context, program, n, spacing):
         super().__init__(None)

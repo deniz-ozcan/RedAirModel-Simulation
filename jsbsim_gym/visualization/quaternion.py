@@ -1,41 +1,43 @@
 import numpy as np
 
+"""
+heading 0 iken farklı dönüş derecelerine göre dönme algoritmalarının performans karşılaştırılması
+"""
 
 class Quaternion:
-    """
-    Quaternion (dört elemanlı hiperkompleks sayı) işlemleri gerçekleştiren bir Quaternion sınıfını içerir. İşte sınıfın temel özellikleri:
-
-    İnit Fonksiyonu (__init__):
-        Quaternion sınıfının başlatıcı fonksiyonudur. Varsayılan olarak, quaternion'u temsil eden dört elemanını da (w, x, y, z) alır.
-    Çarpma Operatörü (__mul__):
-        Quaternion'ları ve scalar (float) değerleri çarpmak için kullanılır. Quaternion ile quaternion çarpımı, quaternion çarpımının matematiksel tanımına göre yapılır.
-    Tersini Alma Fonksiyonu (inv):
-        Quaternion'un tersini (inverse) alır.
-    Matris Dönüşümü Fonksiyonu (mat):
-        Quaternion'u bir dönüş matrisine çevirir.
-    Euler Açılarından Quaternion Oluşturma Fonksiyonu (from_euler):
-        Euler açılarından (phi, theta, psi) bir quaternion oluşturan sınıf metodudur.
-    Repr Fonksiyonu (__repr__):
-        Sınıfın temsilini (representation) oluşturan fonksiyon. Bu, sınıfın bir nesnesini ekrana bastırmak için kullanılır.
-    Kopya Alma Fonksiyonu (copy):
-        Quaternion'un bir kopyasını oluşturan fonksiyon.
-    Özellikler (@property):
-        w, x, y, z gibi quaternion elemanlarına ulaşmak veya onları değiştirmek için kullanılır.
-
-    Sınıf, quaternion matematiksel operasyonlarını gerçekleştirmek için kullanışlıdır. 
-    Quaternion'lar, özellikle 3D dönüşleri temsil etmek ve bu dönüşleri etkili bir şekilde uygulamak için sıklıkla kullanılır.
-    """
-
     def __init__(self, w=1, x=0, y=0, z=0):
-        self._arr = np.array([w, x, y, z], dtype=np.float32)
+        self._arr = np.array([w, x, y, z], dtype="object")
+
+    # def __mul__(self, other):
+    #     if isinstance(other, Quaternion):
+    #         q1 = self._arr
+    #         q2 = other._arr
+    #         q3 = np.zeros(4)
+    #         q3[0] = q1[0] * q2[0] - q1[1:].dot(q2[1:])
+    #         q3[1:] = q1[0] * q2[1:] + q2[0] * q1[1:] + np.cross(q1[1:], q2[1:])
+    #         return Quaternion(*q3)
+    #     elif isinstance(other, float):
+    #         return Quaternion(*(other * self._arr))
+    #     elif isinstance(other, np.ndarray):
+    #         other = other.squeeze()
+    #         if other.shape == (3,):
+    #             return self * Quaternion(0, *other)
+    #         else:
+    #             raise ValueError(f"Array must be length 3 to multiply with Quaternion")
+    #     elif isinstance(other, (float, int)):
+    #         return Quaternion(*(self._arr * other))
+    #     else:
+    #         raise TypeError(f"Multiplication between Quaternion and {type(other)} is not supported.")
 
     def __mul__(self, other):
         if isinstance(other, Quaternion):
             q1 = self._arr
             q2 = other._arr
-            q3 = np.zeros(4)
-            q3[0] = q1[0] * q2[0] - q1[1:].dot(q2[1:])
-            q3[1:] = q1[0] * q2[1:] + q2[0] * q1[1:] + np.cross(q1[1:], q2[1:])
+            q3 = np.zeros(4, dtype="object")
+            q3[0] = q1[0] * q2[0] - (q1[1] * q2[1] + q1[2] * q2[2] + q1[3] * q2[3])
+            q3[1] = q1[0] * q2[1] + q2[0] * q1[1] + q1[2] * q2[3] - q1[3] * q2[2]
+            q3[2] = q1[0] * q2[2] + q2[0] * q1[2] + q1[3] * q2[1] - q1[1] * q2[3]
+            q3[3] = q1[0] * q2[3] + q2[0] * q1[3] + q1[1] * q2[2] - q1[2] * q2[1]
             return Quaternion(*q3)
         elif isinstance(other, float):
             return Quaternion(*(other * self._arr))

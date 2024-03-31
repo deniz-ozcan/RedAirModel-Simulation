@@ -25,16 +25,16 @@ class Main:
         self.done = False
         self.step = 0
         self.calculateTime = Zaman()
-        self.model = SAC.load("models/jsbsim_sac2", self.env)
+        self.model = SAC.load("models/model1", self.env)
         self.run()
 
     def run(self):
         while not self.done:
-            # if self.calculateTime.zamanDurumu():
+            if self.calculateTime.zamanDurumu():
                 render_data = self.env.render(mode='rgb_array')
                 action, _ = self.model.predict(self.obs, deterministic=True)
                 self.obs, reward, self.done, _ = self.env.step(action)
-                print(f"Step: {self.step} | Reward: {reward} | Done: {self.done}", end="\r")
+                print(f"Step: {self.step} | Reward: {reward} | Done: {self.done}", end="\n")
                 self.step += 1
         self.env.close()
 
