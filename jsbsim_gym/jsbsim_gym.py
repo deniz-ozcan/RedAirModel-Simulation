@@ -12,10 +12,10 @@ RADIUS = 6.3781e6
 class JSBSimEnv(Env):
     def __init__(self, root='.'):
         super().__init__()
-        # self.dateObj = datetime.now()
-        # self.fileName = f"./Results/result_{self.dateObj.strftime('%Y%m%d%H%M')}.acmi"
-        # with open(self.fileName, 'w', encoding = 'utf-8') as f:
-        #     f.write(f"""FileType=text/acmi/tacview\nFileVersion=2.1\n0,ReferenceTime={self.dateObj.strftime('%Y-%m-%dT%H:%M:%SZ')}\n0,ReferenceLongitude=0.0\n0,ReferenceLatitude=0.0""")
+        self.dateObj = datetime.now()
+        self.fileName = f"./Results/result_{self.dateObj.strftime('%Y%m%d%H%M%S')}.acmi"
+        with open(self.fileName, 'w', encoding = 'utf-8') as f:
+            f.write(f"""FileType=text/acmi/tacview\nFileVersion=2.1\n0,ReferenceTime={self.dateObj.strftime('%Y-%m-%dT%H:%M:%SZ')}\n0,ReferenceLongitude=0.0\n0,ReferenceLatitude=0.0""")
 
         self.action_space = Box(np.array([-1, -1, -1, 0]), 1, (4,))
         self.observation_space = Dict({
@@ -49,8 +49,9 @@ class JSBSimEnv(Env):
     def setInitialConditions(self):
         rand = np.random.random()
         randhsl = np.random.randint(5000, 10000)
-        randlat = np.random.uniform(35.9025, 42.0268)
-        randlong = np.random.uniform(25.9090, 44.5742)
+        randlat = np.random.uniform(39.25, 40.80)
+        randlong = np.random.uniform(31.80, 33.50)
+        #  np.random.uniform(39.25, 40.80), np.random.uniform(31.80, 33.5)
         self.simulation.set_property_value('propulsion/set-running', -1)
         self.simulation.set_property_value('ic/u-fps', 900.)
         self.simulation.set_property_value('ic/h-sl-ft', randhsl) # farklı bir irtifada başlat
@@ -77,20 +78,20 @@ class JSBSimEnv(Env):
             self.simulation.set_property_value("gear/gear-pos-norm", 0.0)
             self.simulation.run()
 
-        # date = self.dateObj.strftime('%Y%m%d%H%M')
+        date = self.dateObj.strftime('%Y%m%d%H%M')
         obs = self.getStates()
         long = self.simulation.get_property_value("position/long-gc-deg")
         lat = self.simulation.get_property_value("position/lat-geod-deg")
         alt = self.simulation.get_property_value('position/h-sl-meters')
-        # roll = self.simulation.get_property_value("attitude/roll-rad")
-        # pitch = self.simulation.get_property_value("attitude/pitch-rad")
-        # yaw = self.simulation.get_property_value("attitude/psi-deg")
+        roll = self.simulation.get_property_value("attitude/roll-rad")
+        pitch = self.simulation.get_property_value("attitude/pitch-rad")
+        yaw = self.simulation.get_property_value("attitude/psi-deg")
         goal_x = obs["goal_lat_geod_deg"]
         goal_y = obs["goal_long_gc_deg"]
         goal_z = obs["goal_h_sl_meters"]
 
-        # with open(self.fileName, 'a+', encoding = 'utf-8') as f:
-        #     f.write(f"""\n#{round((datetime.now() - self.dateObj).total_seconds(), 2)}\nF{date},T={long}|{lat}|{alt}|{deg(roll)}|{deg(pitch)}|{yaw},Name=F-16C-52,Type=Air+FixedWing,Color=Yellow\nE{date},T={goal_y[0]}|{goal_x[0]}|{goal_z[0]},Name=Target,Type=Air+FixedWing,Color=Red""")
+        with open(self.fileName, 'a+', encoding = 'utf-8') as f:
+            f.write(f"""\n#{round((datetime.now() - self.dateObj).total_seconds(), 2)}\nF{date},T={long}|{lat}|{alt}|{deg(roll)}|{deg(pitch)}|{yaw},Name=F-16C-52,Type=Air+FixedWing,Color=Yellow\nE{date},T={goal_y[0]}|{goal_x[0]}|{goal_z[0]},Name=Target,Type=Air+FixedWing,Color=Red""")
 
         reward, done = 0, False
         if np.sqrt((lat - deg(goal_x)) ** 2 + (long - deg(goal_y)) ** 2) < self.dg and abs(alt - goal_z) < self.dg: reward, done = 10000, True
@@ -121,56 +122,58 @@ class JSBSimEnv(Env):
         self.setInitialConditions()
         self.simulation.run_ic()
         self.simulation.set_property_value('propulsion/set-running', -1)
-        self.goal[:2] = np.random.uniform(35.9025, 42.0268), np.random.uniform(25.9090, 44.5742)
+        # self.goal[:2] = np.random.uniform(35.9025, 42.0268), np.random.uniform(25.9090, 44.5742)
+        # self.goal[:2] = np.random.uniform(37.9025, 40.0268), np.random.uniform(33.9090, 36.5742)
+        self.goal[:2] = np.random.uniform(39.25, 40.80), np.random.uniform(31.80, 33.5)
         self.goal[2] = np.random.default_rng(seed).random() * 5000 + 5000
         return self.getStates()
 
     def render(self, mode = 'human'):
         scale = 1e-3
 
-        if self.viewer is None:
-            self.viewer = Viewer(1600, 900)
-            f16_mesh = load_mesh(self.viewer.ctx, self.viewer.prog, "f16.obj")
-            self.f16 = RenderObject(f16_mesh)
-            self.f16.transform.scale = 1 / 30
-            self.f16.color = 0, 1, 0
-            goal_mesh = load_mesh(self.viewer.ctx, self.viewer.prog, "f16.obj")
-            self.targetF16 = RenderObject(goal_mesh)
-            self.targetF16.transform.scale = 1 / 30
-            self.targetF16.color = 1, 0, 0
-            self.viewer.objects.append(self.f16)
-            self.viewer.objects.append(self.targetF16)
-            self.viewer.objects.append(Grid(self.viewer.ctx, self.viewer.unlit, 21, 1.))
+        # if self.viewer is None:
+        #     self.viewer = Viewer(1280, 720)
+        #     f16_mesh = load_mesh(self.viewer.ctx, self.viewer.prog, "f16.obj")
+        #     self.f16 = RenderObject(f16_mesh)
+        #     self.f16.transform.scale = 1 / 30
+        #     self.f16.color = 0, 1, 0
+        #     goal_mesh = load_mesh(self.viewer.ctx, self.viewer.prog, "f16.obj")
+        #     self.targetF16 = RenderObject(goal_mesh)
+        #     self.targetF16.transform.scale = 1 / 30
+        #     self.targetF16.color = 1, 0, 0
+        #     self.viewer.objects.append(self.f16)
+        #     self.viewer.objects.append(self.targetF16)
+        #     self.viewer.objects.append(Grid(self.viewer.ctx, self.viewer.unlit, 21, 1.))
 
-        # Rough conversion from lat/long to meters / yaklaşık dönüşüm
-        obs = self.getStates()
-        x = obs["position_lat_gc_rad"] * scale
-        y = obs["position_long_gc_rad"] * scale
-        z = obs["position_h_sl_meters"] * scale
+        # # Rough conversion from lat/long to meters / yaklaşık dönüşüm
+        # obs = self.getStates()
+        # x = obs["pos_lat_geod_deg"] * scale
+        # y = obs["pos_long_gc_deg"] * scale
+        # z = obs["pos_h_sl_meters"] * scale
 
-        self.f16.transform.z = x
-        self.f16.transform.x = -y
-        self.f16.transform.y = z
+        # self.f16.transform.z = x
+        # self.f16.transform.x = -y
+        # self.f16.transform.y = z
 
-        rot = Quaternion.from_euler(obs["attitude_phi_rad"], obs["attitude_theta_rad"], deg(obs["attitude_psi_deg"]))
-        rot = Quaternion(rot.w, -rot.y, -rot.z, rot.x)
-        self.f16.transform.rotation = rot
+        # rot = Quaternion.from_euler(obs["attitude_phi_rad"], obs["attitude_theta_rad"], deg(obs["attitude_psi_deg"]))
+        # rot = Quaternion(rot.w, -rot.y, -rot.z, rot.x)
+        # self.f16.transform.rotation = rot
 
-        x, y, z = self.goal * scale
-        self.targetF16.transform.z = x
-        self.targetF16.transform.x = -y
-        self.targetF16.transform.y = z
-        r = self.f16.transform.position - self.targetF16.transform.position
-        rhat = r/np.linalg.norm(r)
-        x, y, z = r
-        yaw = np.arctan2(-x,-z)
-        pitch = np.arctan2(-y, np.sqrt(x*2 + z*2))
+        # x, y, z = self.goal * scale
+        # self.targetF16.transform.z = x
+        # self.targetF16.transform.x = -y
+        # self.targetF16.transform.y = z
+        # r = self.f16.transform.position - self.targetF16.transform.position
+        # rhat = r/np.linalg.norm(r)
+        # x, y, z = r
+        # yaw = np.arctan2(-x,-z)
+        # pitch = np.arctan2(-y, np.sqrt(x*2 + z*2))
 
-        self.viewer.set_view(*(r + self.targetF16.transform.position + rhat + np.array([0, .33, 0])), Quaternion.from_euler(-pitch, yaw, 0, mode=1))
-        self.viewer.render()
+        # self.viewer.set_view(*(r + self.targetF16.transform.position + rhat + np.array([0, .33, 0])), Quaternion.from_euler(-pitch, yaw, 0, mode=1))
+        # self.viewer.render()
 
-        if mode == 'rgb_array':
-            return self.viewer.get_frame()
+        # if mode == 'rgb_array':
+        #     return self.viewer.get_frame()
 
     def close(self):
         if self.viewer is not None:
@@ -196,9 +199,9 @@ class PositionReward(Wrapper):
         return obs
 
     def getDisplacement(self, obs):
-        displacement = np.concatenate((obs["pos_lat_geod_deg"] - obs["goal_lat_geod_deg"], 
-                                       obs["pos_long_gc_deg"] - obs["goal_long_gc_deg"], 
-                                       obs["pos_h_sl_meters"] - obs["goal_h_sl_meters"]))
+        displacement = np.concatenate(( obs["pos_lat_geod_deg"] - obs["goal_lat_geod_deg"], 
+                                        obs["pos_long_gc_deg"] - obs["goal_long_gc_deg"], 
+                                        obs["pos_h_sl_meters"] - obs["goal_h_sl_meters"]))
         return np.linalg.norm(displacement)
 
 def wrapJsbSim(**kwargs):

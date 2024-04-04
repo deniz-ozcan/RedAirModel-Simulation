@@ -3,7 +3,7 @@ import jsbsim_gym.jsbsim_gym # This line makes sure the environment is registere
 from os import path
 # import imageio as iio
 from jsbsim_gym.features import JSBSimFeatureExtractor
-from stable_baselines3 import SAC
+from stable_baselines3 import SAC, PPO
 from time import time
 class Zaman(object):
 
@@ -11,7 +11,7 @@ class Zaman(object):
         self.sonZaman = time()
 
     def zamanDurumu(self):
-        if time() > self.sonZaman + (1 / 17):
+        if time() > self.sonZaman + (1 / 125):
             self.sonZaman = time()
             return True
         return False
@@ -25,10 +25,10 @@ class Main:
         self.done = False
         self.step = 0
         self.calculateTime = Zaman()
-        self.model = SAC.load("models/model1", self.env)
-        self.run()
+        # self.model = SAC.load("models/model_sac", self.env)
+        self.model = PPO.load("models/model_ppo", self.env)
 
-    def run(self):
+    def run(self, option):
         while not self.done:
             if self.calculateTime.zamanDurumu():
                 render_data = self.env.render(mode='rgb_array')
@@ -37,7 +37,18 @@ class Main:
                 print(f"Step: {self.step} | Reward: {reward} | Done: {self.done}", end="\n")
                 self.step += 1
         self.env.close()
+        return True
 
 if __name__ == "__main__":
+    c = 0
     starter = Main()
-    starter.run()
+    quitx = True
+    while quitx:
+        quitx = starter.run(quitx)
+        if quitx:
+            c += 1
+            starter = Main()
+            starter.run(quitx)
+            if c > 9:
+                quitx = False
+                break
