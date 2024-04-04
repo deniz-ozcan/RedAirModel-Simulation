@@ -160,7 +160,6 @@ cython_debug/
 *.txt
 *.pdf
 /logs
-/models
 *.jpeg
 *.jpg
 *.png
