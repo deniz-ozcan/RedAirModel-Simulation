@@ -6,6 +6,43 @@ from .visualization.quaternion import Quaternion
 from datetime import datetime
 from math import degrees as deg, radians as rad
 import numpy as np
+import torch as th
+
+
+class PositionReward(Wrapper):
+
+    def __init__(self, env, gain):
+        super().__init__(env)
+        self.gain = gain
+
+    def step(self, action):
+        obs, reward, done, info = super().step(action)
+        distance = self.getDisplacement(obs)
+        reward += self.gain * (self.last_distance - distance)
+        bearing = self.getBearing(obs)
+        self.last_distance = distance
+        print(self.last_bearing, bearing)
+        reward += self.gain * (self.last_bearing - bearing)
+        self.last_bearing = bearing
+        return obs, reward, done, info
+
+    def reset(self):
+        obs = super().reset()
+        self.last_distance = self.getDisplacement(obs)
+        self.last_bearing = self.getBearing(obs)
+        return obs
+
+    def getDisplacement(self, obs):
+        d =np.concatenate(( obs["goal_lat_geod_deg"] - obs["pos_lat_geod_deg"], 
+                            obs["goal_long_gc_deg"] - obs["pos_long_gc_deg"], 
+                            obs["goal_h_sl_meters"] - obs["pos_h_sl_meters"]))
+        return np.linalg.norm(d)
+
+    def getBearing(self, obs):
+        dp = np.array([ obs["goal_lat_geod_deg"] - obs["pos_lat_geod_deg"], 
+                        obs["goal_long_gc_deg"] - obs["pos_long_gc_deg"]])
+        bearing = np.arctan2(dp[1], dp[0]) - obs["attitude_psi_deg"]
+        return bearing[0]
 
 RADIUS = 6.3781e6
 
@@ -180,29 +217,6 @@ class JSBSimEnv(Env):
             self.viewer.close()
             self.viewer = None
 
-class PositionReward(Wrapper):
-
-    def __init__(self, env, gain):
-        super().__init__(env)
-        self.gain = gain
-
-    def step(self, action):
-        obs, reward, done, info = super().step(action)
-        distance = self.getDisplacement(obs)
-        reward += self.gain * (self.last_distance - distance)
-        self.last_distance = distance
-        return obs, reward, done, info
-
-    def reset(self):
-        obs = super().reset()
-        self.last_distance = self.getDisplacement(obs)
-        return obs
-
-    def getDisplacement(self, obs):
-        displacement = np.concatenate(( obs["pos_lat_geod_deg"] - obs["goal_lat_geod_deg"], 
-                                        obs["pos_long_gc_deg"] - obs["goal_long_gc_deg"], 
-                                        obs["pos_h_sl_meters"] - obs["goal_h_sl_meters"]))
-        return np.linalg.norm(displacement)
 
 def wrapJsbSim(**kwargs):
     return PositionReward(JSBSimEnv(**kwargs), 1e-2)
