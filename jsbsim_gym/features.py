@@ -1,4 +1,5 @@
 import torch as th
+import numpy as np
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 
 class JSBSimFeatureExtractor(BaseFeaturesExtractor):
@@ -25,9 +26,8 @@ class JSBSimFeatureExtractor(BaseFeaturesExtractor):
 
         phi_theta = th.concat([obs["attitude_phi_rad"], obs["attitude_theta_rad"]], dim=1)
         cpt, spt = th.cos(phi_theta), th.sin(phi_theta)
-        rel_bearing = th.atan2(displacement[:,1:2], displacement[:,0:1]) - obs["attitude_psi_deg"]
-        print("rel_bearing", rel_bearing, displacement[:,1:2], displacement[:,0:1], displacement)
-        cr, sr = th.cos(rel_bearing), th.sin(rel_bearing) # TODO: böyle mi olmalı?
+        rel_bearing = np.degrees(th.atan2(displacement[:,1:2], displacement[:,0:1])) - obs["attitude_psi_deg"]
+        cr, sr = th.cos(rel_bearing), th.sin(rel_bearing)
 
         angular_rates = th.concat([obs["velocities_p_rad_sec"], obs["velocities_q_rad_sec"], obs["velocities_r_rad_sec"]], dim=1)
         mach = obs["velocities_mach"]
