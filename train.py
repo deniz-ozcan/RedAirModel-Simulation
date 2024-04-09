@@ -13,5 +13,6 @@ try:
 except Exception as e:
     gym.logger.error(f"{e}")
 finally:
-    model.save("models/model_PPO")
+    model.save("models/model_sac")
+    # model.save("models/model_ppo")
     model.save_replay_buffer("models/model1_buffer")

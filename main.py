@@ -25,12 +25,12 @@ class Main:
         self.done = False
         self.step = 0
         self.calculateTime = Zaman()
-        # self.model = SAC.load("models/model_sac", self.env)
-        self.model = PPO.load("models/model_ppo", self.env)
+        self.model = SAC.load("models/model_sac", self.env)
+        # self.model = PPO.load("models/model_ppo", self.env)
 
     def run(self, option):
         while not self.done:
-            if self.calculateTime.zamanDurumu():
+            # if self.calculateTime.zamanDurumu():
                 render_data = self.env.render(mode='rgb_array')
                 action, _ = self.model.predict(self.obs, deterministic=True)
                 self.obs, reward, self.done, _ = self.env.step(action)
@@ -42,13 +42,14 @@ class Main:
 if __name__ == "__main__":
     c = 0
     starter = Main()
-    quitx = True
-    while quitx:
-        quitx = starter.run(quitx)
-        if quitx:
-            c += 1
-            starter = Main()
-            starter.run(quitx)
-            if c > 9:
-                quitx = False
-                break
+    starter.run(True)
+    # quitx = True
+    # while quitx:
+    #     quitx = starter.run(quitx)
+    #     if quitx:
+    #         c += 1
+    #         starter = Main()
+    #         starter.run(quitx)
+    #         if c > 9:
+    #             quitx = False
+    #             break

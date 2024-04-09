@@ -45,7 +45,7 @@ class PositionReward(Wrapper):
         dp = np.array([ obs["goal_lat_geod_deg"] - obs["pos_lat_geod_deg"], 
                         obs["goal_long_gc_deg"] - obs["pos_long_gc_deg"]])
         bearing = (np.degrees(np.arctan2(dp[1], dp[0])) - obs["attitude_psi_deg"] + 360) % 360
-        return bearing
+        return bearing[0]
 
 
 RADIUS = 6.3781e6
@@ -54,9 +54,9 @@ class JSBSimEnv(Env):
     def __init__(self, root='.'):
         super().__init__()
         self.dateObj = datetime.now()
-        # self.fileName = f"./Results/result_{self.dateObj.strftime('%Y%m%d%H%M%S')}.acmi"
-        # with open(self.fileName, 'w', encoding = 'utf-8') as f:
-        #     f.write(f"""FileType=text/acmi/tacview\nFileVersion=2.1\n0,ReferenceTime={self.dateObj.strftime('%Y-%m-%dT%H:%M:%SZ')}\n0,ReferenceLongitude=0.0\n0,ReferenceLatitude=0.0""")
+        self.fileName = f"./Results/result_{self.dateObj.strftime('%Y%m%d%H%M%S')}.acmi"
+        with open(self.fileName, 'w', encoding = 'utf-8') as f:
+            f.write(f"""FileType=text/acmi/tacview\nFileVersion=2.1\n0,ReferenceTime={self.dateObj.strftime('%Y-%m-%dT%H:%M:%SZ')}\n0,ReferenceLongitude=0.0\n0,ReferenceLatitude=0.0""")
 
         self.action_space = Box(np.array([-1, -1, -1, 0]), 1, (4,))
         self.observation_space = Dict({
@@ -90,8 +90,8 @@ class JSBSimEnv(Env):
     def setInitialConditions(self):
         rand = np.random.random()
         randhsl = np.random.randint(5000, 10000)
-        randlat = np.random.uniform(39.25, 40.25)
-        randlong = np.random.uniform(32.25, 33.25)
+        randlat = np.random.uniform(39.25, 39.35)
+        randlong = np.random.uniform(32.25, 32.35)
         #  np.random.uniform(39.25, 40.80), np.random.uniform(31.80, 33.5)
         self.simulation.set_property_value('propulsion/set-running', -1)
         self.simulation.set_property_value('ic/u-fps', 900.)
@@ -124,15 +124,15 @@ class JSBSimEnv(Env):
         long = self.simulation.get_property_value("position/long-gc-deg")
         lat = self.simulation.get_property_value("position/lat-geod-deg")
         alt = self.simulation.get_property_value('position/h-sl-meters')
-        # roll = self.simulation.get_property_value("attitude/roll-rad")
-        # pitch = self.simulation.get_property_value("attitude/pitch-rad")
-        # yaw = self.simulation.get_property_value("attitude/psi-deg")
+        roll = self.simulation.get_property_value("attitude/roll-rad")
+        pitch = self.simulation.get_property_value("attitude/pitch-rad")
+        yaw = self.simulation.get_property_value("attitude/psi-deg")
         goal_x = obs["goal_lat_geod_deg"]
         goal_y = obs["goal_long_gc_deg"]
         goal_z = obs["goal_h_sl_meters"]
 
-        # with open(self.fileName, 'a+', encoding = 'utf-8') as f:
-        #     f.write(f"""\n#{round((datetime.now() - self.dateObj).total_seconds(), 2)}\nF{date},T={long}|{lat}|{alt}|{deg(roll)}|{deg(pitch)}|{yaw},Name=F-16C-52,Type=Air+FixedWing,Color=Yellow\nE{date},T={goal_y[0]}|{goal_x[0]}|{goal_z[0]},Name=Target,Type=Air+FixedWing,Color=Red""")
+        with open(self.fileName, 'a+', encoding = 'utf-8') as f:
+            f.write(f"""\n#{round((datetime.now() - self.dateObj).total_seconds(), 2)}\nF{date},T={long}|{lat}|{alt}|{deg(roll)}|{deg(pitch)}|{yaw},Name=F-16C-52,Type=Air+FixedWing,Color=Yellow\nE{date},T={goal_y[0]}|{goal_x[0]}|{goal_z[0]},Name=Target,Type=Air+FixedWing,Color=Red""")
 
         reward, done = 0, False
         if np.sqrt((lat - deg(goal_x)) ** 2 + (long - deg(goal_y)) ** 2) < self.dg and abs(alt - goal_z) < self.dg: reward, done = 10000, True
@@ -165,7 +165,8 @@ class JSBSimEnv(Env):
         self.simulation.set_property_value('propulsion/set-running', -1)
         # self.goal[:2] = np.random.uniform(35.9025, 42.0268), np.random.uniform(25.9090, 44.5742)
         # self.goal[:2] = np.random.uniform(37.9025, 40.0268), np.random.uniform(33.9090, 36.5742)
-        self.goal[:2] = np.random.uniform(39.25, 40.25), np.random.uniform(32.25, 33.25)
+        # self.goal[:2] = np.random.uniform(39.25, 40.25), np.random.uniform(32.25, 33.25)
+        self.goal[:2] = np.random.uniform(39.25, 39.35), np.random.uniform(32.25, 32.35)
         self.goal[2] = np.random.default_rng(seed).random() * 5000 + 5000
         return self.getStates()
 
@@ -225,7 +226,7 @@ class JSBSimEnv(Env):
 def wrapJsbSim(**kwargs):
     return PositionReward(JSBSimEnv(**kwargs), 1e-2)
 
-register(id="JSBSim-v0", entry_point = wrapJsbSim, max_episode_steps=1600)
+register(id="JSBSim-v0", entry_point = wrapJsbSim, max_episode_steps=8000)
 
 if __name__ == "__main__":
     from time import sleep
