@@ -11,7 +11,7 @@ class Zaman(object):
         self.sonZaman = time()
 
     def zamanDurumu(self):
-        if time() > self.sonZaman + (1 / 17):
+        if time() > self.sonZaman + (1 / 10):
             self.sonZaman = time()
             return True
         return False

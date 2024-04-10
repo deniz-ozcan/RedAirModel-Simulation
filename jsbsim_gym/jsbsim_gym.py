@@ -26,7 +26,7 @@ class PositionReward(Wrapper):
         reward += self.gain * (self.last_bearing - bearing)
         self.last_bearing = bearing
 
-        print(f"Distance: {distance} | Bearing: {bearing} | Reward: {reward}")
+        # print(f"Distance: {distance} | Bearing: {bearing} | Reward: {reward}")
         return obs, reward, done, info
 
     def reset(self):
@@ -36,9 +36,10 @@ class PositionReward(Wrapper):
         return obs
 
     def getDisplacement(self, obs):
-        d =np.concatenate(( obs["goal_lat_geod_deg"] - obs["pos_lat_geod_deg"], 
+        d = np.concatenate((obs["goal_lat_geod_deg"] - obs["pos_lat_geod_deg"], 
                             obs["goal_long_gc_deg"] - obs["pos_long_gc_deg"], 
                             obs["goal_h_sl_meters"] - obs["pos_h_sl_meters"]))
+        # d = 1 / (1 + np.sqrt(np.sum(d[:2] ** 2, 0)) * 1e-3)
         return np.linalg.norm(d)
 
     def getBearing(self, obs):
@@ -48,7 +49,7 @@ class PositionReward(Wrapper):
         return bearing[0]
 
 
-RADIUS = 6.3781e6
+# RADIUS = 6.3781e6
 
 class JSBSimEnv(Env):
     def __init__(self, root='.'):
@@ -142,8 +143,8 @@ class JSBSimEnv(Env):
 
     def getStates(self):
         return {
-            "pos_lat_geod_deg": np.array([self.simulation.get_property_value("position/lat-geod-deg") * RADIUS]),
-            "pos_long_gc_deg": np.array([self.simulation.get_property_value("position/long-gc-deg") * RADIUS]),
+            "pos_lat_geod_deg": np.array([self.simulation.get_property_value("position/lat-geod-deg")]),
+            "pos_long_gc_deg": np.array([self.simulation.get_property_value("position/long-gc-deg")]),
             "pos_h_sl_meters": np.array([self.simulation.get_property_value("position/h-sl-meters")]),
             "velocities_mach": np.array([self.simulation.get_property_value("velocities/mach")]),
             "aero_alpha_rad": np.array([self.simulation.get_property_value("aero/alpha-rad")]),
@@ -226,7 +227,7 @@ class JSBSimEnv(Env):
 def wrapJsbSim(**kwargs):
     return PositionReward(JSBSimEnv(**kwargs), 1e-2)
 
-register(id="JSBSim-v0", entry_point = wrapJsbSim, max_episode_steps=8000)
+register(id="JSBSim-v0", entry_point = wrapJsbSim, max_episode_steps=1600)
 
 if __name__ == "__main__":
     from time import sleep
