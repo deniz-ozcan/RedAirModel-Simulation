@@ -18,7 +18,6 @@ class PositionReward(Wrapper):
     def step(self, action):
         obs, reward, done, info = super().step(action)
         dist, bearing = self.getDistAndBearing(obs)
-        print(dist,  self.haversine_with_altitude(obs),bearing)
         reward += self.gain * (self.last_dist - dist)
         reward += self.gain * (self.last_bearing - bearing)
         self.last_dist, self.last_bearing = dist, bearing
