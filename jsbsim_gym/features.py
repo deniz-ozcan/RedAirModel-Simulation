@@ -15,7 +15,6 @@ class JSBSimFeatureExtractor(BaseFeaturesExtractor):
         displacement = goal - position
         # We normalize distance this way to bound it between 0 and 1
         dist_norm = 1 / (1 + th.sqrt(th.sum(displacement[:, :2] ** 2, 1, True)) * 1e-3)
-
         # Normalize these by approximate flight ceiling
         dz_norm = (obs["goal_h_sl_meters"] - obs["pos_h_sl_meters"]) / 15000
         alt_norm = obs["pos_h_sl_meters"] / 15000
@@ -31,5 +30,4 @@ class JSBSimFeatureExtractor(BaseFeaturesExtractor):
 
         angular_rates = th.concat([obs["velocities_p_rad_sec"], obs["velocities_q_rad_sec"], obs["velocities_r_rad_sec"]], dim=1)
         mach = obs["velocities_mach"]
-        print(th.concat([dist_norm, dz_norm, alt_norm, mach, angular_rates, cab, sab, cpt, spt, cr, sr], dim=1))
         return th.concat([dist_norm, dz_norm, alt_norm, mach, angular_rates, cab, sab, cpt, spt, cr, sr], dim=1)

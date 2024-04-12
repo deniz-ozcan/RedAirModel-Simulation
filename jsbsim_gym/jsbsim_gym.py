@@ -4,11 +4,11 @@ from gym.spaces import Box, Dict
 from .visualization.rendering import Viewer, load_mesh, RenderObject, Grid
 from .visualization.quaternion import Quaternion
 from datetime import datetime
-from math import degrees as deg, radians as rad, atan2
+from math import degrees as deg, radians as rad
 import numpy as np
-import torch as th
+from pyproj import Geod
 
-
+geodesic = Geod(ellps='WGS84')
 class PositionReward(Wrapper):
 
     def __init__(self, env, gain):
@@ -17,48 +17,27 @@ class PositionReward(Wrapper):
 
     def step(self, action):
         obs, reward, done, info = super().step(action)
-
-        distance = self.getDisplacement(obs)
-        reward += self.gain * (self.last_distance - distance)
-        self.last_distance = distance
-
-        bearing = self.getBearing(obs)
+        dist, bearing = self.getDistAndBearing(obs)
+        print(dist,  self.haversine_with_altitude(obs),bearing)
+        reward += self.gain * (self.last_dist - dist)
         reward += self.gain * (self.last_bearing - bearing)
-        self.last_bearing = bearing
-
-        # print(f"Distance: {distance} | Bearing: {bearing} | Reward: {reward}")
+        self.last_dist, self.last_bearing = dist, bearing
         return obs, reward, done, info
 
     def reset(self):
         obs = super().reset()
-        self.last_distance = self.getDisplacement(obs)
-        self.last_bearing = self.getBearing(obs)
+        self.last_dist, self.last_bearing = self.getDistAndBearing(obs)
         return obs
 
-    def getDisplacement(self, obs):
-        d = np.concatenate((obs["goal_lat_geod_deg"] - obs["pos_lat_geod_deg"], 
-                            obs["goal_long_gc_deg"] - obs["pos_long_gc_deg"], 
-                            obs["goal_h_sl_meters"] - obs["pos_h_sl_meters"]))
-        # d = 1 / (1 + np.sqrt(np.sum(d[:2] ** 2, 0)) * 1e-3)
-        return np.linalg.norm(d)
-
-    def getBearing(self, obs):
-        dp = np.array([ obs["goal_lat_geod_deg"] - obs["pos_lat_geod_deg"], 
-                        obs["goal_long_gc_deg"] - obs["pos_long_gc_deg"]])
-        bearing = (np.degrees(np.arctan2(dp[1], dp[0])) - obs["attitude_psi_deg"] + 360) % 360
-        return bearing[0]
-
-
-# RADIUS = 6.3781e6
+    def getDistAndBearing(self, obs):
+        az, _, dist = geodesic.inv(obs["goal_long_gc_deg"], obs["goal_lat_geod_deg"], obs["pos_long_gc_deg"], obs["pos_lat_geod_deg"])
+        dist = np.hypot(dist, obs["goal_h_sl_meters"] - obs["pos_h_sl_meters"])
+        return dist[0], az[0]
 
 class JSBSimEnv(Env):
     def __init__(self, root='.'):
         super().__init__()
         self.dateObj = datetime.now()
-        self.fileName = f"./Results/result_{self.dateObj.strftime('%Y%m%d%H%M%S')}.acmi"
-        with open(self.fileName, 'w', encoding = 'utf-8') as f:
-            f.write(f"""FileType=text/acmi/tacview\nFileVersion=2.1\n0,ReferenceTime={self.dateObj.strftime('%Y-%m-%dT%H:%M:%SZ')}\n0,ReferenceLongitude=0.0\n0,ReferenceLatitude=0.0""")
-
         self.action_space = Box(np.array([-1, -1, -1, 0]), 1, (4,))
         self.observation_space = Dict({
             "pos_lat_geod_deg": Box(low = -90, high = 90, shape = (1, ), dtype = np.float32),
@@ -91,9 +70,8 @@ class JSBSimEnv(Env):
     def setInitialConditions(self):
         rand = np.random.random()
         randhsl = np.random.randint(5000, 10000)
-        randlat = np.random.uniform(39.25, 39.35)
-        randlong = np.random.uniform(32.25, 32.35)
-        #  np.random.uniform(39.25, 40.80), np.random.uniform(31.80, 33.5)
+        randlat, randlong = np.random.uniform(39.25, 39.35), np.random.uniform(32.25, 32.35)
+        # randlat, randlong = np.random.uniform(39.25, 40.25), np.random.uniform(32.25, 33.25)
         self.simulation.set_property_value('propulsion/set-running', -1)
         self.simulation.set_property_value('ic/u-fps', 900.)
         self.simulation.set_property_value('ic/h-sl-ft', randhsl) # farklı bir irtifada başlat
@@ -101,6 +79,15 @@ class JSBSimEnv(Env):
         self.simulation.set_property_value('ic/long-gc-deg', randlong) # farklı bir boylamda başlat
         self.simulation.set_property_value('ic/lat-geod-deg', randlat) # farklı bir enlemde başlat
 
+    def reset(self, seed = None):
+        self.setInitialConditions()
+        self.simulation.run_ic()
+        self.simulation.set_property_value('propulsion/set-running', -1)
+        self.goal[:2] = np.random.uniform(39.25, 39.35), np.random.uniform(32.25, 32.35)
+        # self.goal[:2] = np.random.uniform(39.25, 40.25), np.random.uniform(32.25, 33.25)
+        # self.goal[2] = np.random.default_rng(seed).random() * 5000 + 5000
+        self.goal[2] = 3048
+        return self.getStates()
 
     def step(self, action):
         roll_cmd, pitch_cmd, yaw_cmd, throttle = action
@@ -132,7 +119,8 @@ class JSBSimEnv(Env):
         goal_y = obs["goal_long_gc_deg"]
         goal_z = obs["goal_h_sl_meters"]
 
-        with open(self.fileName, 'a+', encoding = 'utf-8') as f:
+        with open(f"./Results/result_{self.dateObj.strftime('%Y%m%d%H%M%S')}.acmi", 'a+', encoding = 'utf-8') as f:
+            if f.tell() == 0:f.write(f"""FileType=text/acmi/tacview\nFileVersion=2.1\n0,ReferenceTime={self.dateObj.strftime('%Y-%m-%dT%H:%M:%SZ')}\n0,ReferenceLongitude=0.0\n0,ReferenceLatitude=0.0""")
             f.write(f"""\n#{round((datetime.now() - self.dateObj).total_seconds(), 2)}\nF{date},T={long}|{lat}|{alt}|{deg(roll)}|{deg(pitch)}|{yaw},Name=F-16C-52,Type=Air+FixedWing,Color=Yellow\nE{date},T={goal_y[0]}|{goal_x[0]}|{goal_z[0]},Name=Target,Type=Air+FixedWing,Color=Red""")
 
         reward, done = 0, False
@@ -160,20 +148,9 @@ class JSBSimEnv(Env):
             "goal_h_sl_meters": np.array([self.goal[2]])
         }
 
-    def reset(self, seed = None):
-        self.setInitialConditions()
-        self.simulation.run_ic()
-        self.simulation.set_property_value('propulsion/set-running', -1)
-        # self.goal[:2] = np.random.uniform(35.9025, 42.0268), np.random.uniform(25.9090, 44.5742)
-        # self.goal[:2] = np.random.uniform(37.9025, 40.0268), np.random.uniform(33.9090, 36.5742)
-        # self.goal[:2] = np.random.uniform(39.25, 40.25), np.random.uniform(32.25, 33.25)
-        self.goal[:2] = np.random.uniform(39.25, 39.35), np.random.uniform(32.25, 32.35)
-        self.goal[2] = np.random.default_rng(seed).random() * 5000 + 5000
-        return self.getStates()
-
     def render(self, mode = 'human'):
         scale = 1e-3
-
+        RADIUS = 6.3781e6
         if self.viewer is None:
             self.viewer = Viewer(1280, 720)
             f16_mesh = load_mesh(self.viewer.ctx, self.viewer.prog, "f16.obj")
@@ -190,8 +167,8 @@ class JSBSimEnv(Env):
 
         # Rough conversion from lat/long to meters / yaklaşık dönüşüm
         obs = self.getStates()
-        x = rad(obs["pos_lat_geod_deg"]) * scale
-        y = rad(obs["pos_long_gc_deg"]) * scale
+        x = rad(obs["pos_lat_geod_deg"]) * scale * RADIUS
+        y = rad(obs["pos_long_gc_deg"]) * scale * RADIUS
         z = obs["pos_h_sl_meters"] * scale
 
         self.f16.transform.z = x

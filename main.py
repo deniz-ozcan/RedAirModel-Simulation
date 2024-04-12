@@ -25,8 +25,8 @@ class Main:
         self.done = False
         self.step = 0
         self.calculateTime = Zaman()
-        self.model = SAC.load("models/model_sac", self.env)
-        # self.model = PPO.load("models/model_ppo", self.env)
+        # self.model = SAC.load("models/model_sac", self.env)
+        self.model = PPO.load("models/model_ppo1", self.env)
 
     def run(self, option):
         while not self.done:
@@ -42,14 +42,14 @@ class Main:
 if __name__ == "__main__":
     c = 0
     starter = Main()
-    starter.run(True)
-    # quitx = True
-    # while quitx:
-    #     quitx = starter.run(quitx)
-    #     if quitx:
-    #         c += 1
-    #         starter = Main()
-    #         starter.run(quitx)
-    #         if c > 9:
-    #             quitx = False
-    #             break
+    # starter.run(True)
+    quitx = True
+    while quitx:
+        quitx = starter.run(quitx)
+        if quitx:
+            c += 1
+            starter = Main()
+            starter.run(quitx)
+            if c > 9:
+                quitx = False
+                break
