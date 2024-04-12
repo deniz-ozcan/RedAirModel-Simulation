@@ -34,7 +34,7 @@ class Main:
                 render_data = self.env.render(mode='rgb_array')
                 action, _ = self.model.predict(self.obs, deterministic=True)
                 self.obs, reward, self.done, _ = self.env.step(action)
-                # print(f"Step: {self.step} | Reward: {reward} | Done: {self.done}", end="\n")
+                print(f"Step: {self.step} | Reward: {reward} | Done: {self.done}", end="\n")
                 self.step += 1
         self.env.close()
         return True

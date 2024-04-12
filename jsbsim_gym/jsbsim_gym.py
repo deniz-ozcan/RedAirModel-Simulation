@@ -17,44 +17,50 @@ class PositionReward(Wrapper):
 
     def step(self, action):
         obs, reward, done, info = super().step(action)
-        dist, bearing = self.getDistAndBearing(obs)
+        dist, alt = self.getDistance(obs)
         reward += self.gain * (self.last_dist - dist)
-        reward += self.gain * (self.last_bearing - bearing)
-        self.last_dist, self.last_bearing = dist, bearing
+        reward += self.gain * (self.last_alt - alt)
+        self.last_dist, self.last_alt =  dist, alt
         return obs, reward, done, info
 
     def reset(self):
         obs = super().reset()
-        self.last_dist, self.last_bearing = self.getDistAndBearing(obs)
+        self.last_dist, self.last_alt = self.getDistance(obs)
         return obs
 
-    def getDistAndBearing(self, obs):
+    def getDistance(self, obs):
         az, _, dist = geodesic.inv(obs["goal_long_gc_deg"], obs["goal_lat_geod_deg"], obs["pos_long_gc_deg"], obs["pos_lat_geod_deg"])
-        dist = np.hypot(dist, obs["goal_h_sl_meters"] - obs["pos_h_sl_meters"])
-        return dist[0], az[0]
+        return dist[0], abs(obs["goal_h_sl_meters"][0]- obs["pos_h_sl_meters"][0])
+
+    # def getDisplacement(self, obs):
+    #     displacement = np.concatenate(( np.deg2rad(obs["goal_lat_geod_deg"]) - np.deg2rad(obs["pos_lat_geod_deg"]), 
+    #                                     np.deg2rad(obs["goal_long_gc_deg"]) - np.deg2rad(obs["pos_long_gc_deg"]), 
+    #                                     obs["goal_h_sl_meters"] - obs["pos_h_sl_meters"]))
+    #     return np.linalg.norm(displacement)
 
 class JSBSimEnv(Env):
     def __init__(self, root='.'):
         super().__init__()
         self.dateObj = datetime.now()
-        self.action_space = Box(np.array([-1, -1, -1, 0]), 1, (4,))
+        self.action_space = Box(np.array([-1,-1,-1,0]), 1, (4,))
         self.observation_space = Dict({
-            "pos_lat_geod_deg": Box(low = -90, high = 90, shape = (1, ), dtype = np.float32),
-            "pos_long_gc_deg": Box(low = -180, high = 180, shape = (1, ), dtype = np.float32),
-            "pos_h_sl_meters": Box(low = 5000, high = 10000, shape = (1,), dtype = np.float32),
-            "aero_alpha_rad": Box(low = -0.2618, high = 0.6109, shape = (1,), dtype = np.float32),
-            "aero_beta_rad": Box(low = -0.1745, high = 0.2618, shape = (1,), dtype = np.float32),
-            "velocities_mach": Box(low = 0, high = 2.05, shape = (1,), dtype = np. float32),
-            "velocities_p_rad_sec": Box(low = -0.52, high = 0.52, shape = (1,), dtype = np.float32),
-            "velocities_q_rad_sec": Box(low = -0.44, high = 0.44, shape = (1,), dtype = np.float32),
-            "velocities_r_rad_sec": Box(low = -0.32, high = 0.32, shape = (1,), dtype = np.float32),
-            "attitude_phi_rad": Box(low = -0.2618, high = 0.2618, shape = (1,), dtype = np.float32),
-            "attitude_theta_rad": Box(low = -0.2618, high = 0.2618, shape = (1,), dtype = np.float32),
-            "attitude_psi_deg": Box(low = 0, high = 360, shape = (1,), dtype = np.float32),
-            "goal_lat_geod_deg": Box(low = -90, high = 90, shape = (1, ), dtype = np.float32),
-            "goal_long_gc_deg": Box(low = -180, high = 180, shape = (1, ), dtype = np.float32),
-            "goal_h_sl_meters": Box(low = 5000, high = 10000, shape = (1,), dtype = np.float32),
-        })
+                "pos_lat_geod_deg": Box(low = -np.inf, high = np.inf, shape = (1,)),
+                "pos_long_gc_deg": Box(low = -np.inf, high = np.inf, shape = (1,)),
+                "pos_h_sl_meters": Box(low = 0, high = np.inf, shape = (1,)),
+                "aero_alpha_rad": Box(low = -np.pi, high = np.pi, shape = (1,)),
+                "aero_beta_rad": Box(low = -np.pi, high = np.pi, shape = (1,)),
+                "velocities_mach": Box(low = 0, high = np.inf, shape = (1,)),
+                "velocities_p_rad_sec": Box(low = -np.inf, high = np.inf, shape = (1,)),
+                "velocities_q_rad_sec": Box(low = -np.inf, high = np.inf, shape = (1,)),
+                "velocities_r_rad_sec": Box(low = -np.inf, high = np.inf, shape = (1,)),
+                "attitude_phi_rad": Box(low = -np.pi, high = np.pi, shape = (1,)),
+                "attitude_theta_rad": Box(low = -np.pi, high = np.pi, shape = (1,)),
+                "attitude_psi_rad": Box(low = -np.pi, high = np.pi, shape = (1,)),
+                "goal_lat_geod_deg": Box(low = -np.inf, high = np.inf, shape = (1,)),
+                "goal_long_gc_deg": Box(low = -np.inf, high = np.inf, shape = (1,)),
+                "goal_h_sl_meters": Box(low = 0, high = np.inf, shape = (1,)),
+            })
+
 
         self.simulation = FGFDMExec(root, None)
         self.simulation.set_debug_level(0)
@@ -68,9 +74,8 @@ class JSBSimEnv(Env):
 
     def setInitialConditions(self):
         rand = np.random.random()
-        randhsl = np.random.randint(5000, 10000)
+        randhsl = np.random.randint(1000, 10000)
         randlat, randlong = np.random.uniform(39.25, 39.35), np.random.uniform(32.25, 32.35)
-        # randlat, randlong = np.random.uniform(39.25, 40.25), np.random.uniform(32.25, 33.25)
         self.simulation.set_property_value('propulsion/set-running', -1)
         self.simulation.set_property_value('ic/u-fps', 900.)
         self.simulation.set_property_value('ic/h-sl-ft', randhsl) # farklı bir irtifada başlat
@@ -83,8 +88,6 @@ class JSBSimEnv(Env):
         self.simulation.run_ic()
         self.simulation.set_property_value('propulsion/set-running', -1)
         self.goal[:2] = np.random.uniform(39.25, 39.35), np.random.uniform(32.25, 32.35)
-        # self.goal[:2] = np.random.uniform(39.25, 40.25), np.random.uniform(32.25, 33.25)
-        # self.goal[2] = np.random.default_rng(seed).random() * 5000 + 5000
         self.goal[2] = 3048
         return self.getStates()
 
@@ -108,25 +111,27 @@ class JSBSimEnv(Env):
 
         date = self.dateObj.strftime('%Y%m%d%H%M')
         obs = self.getStates()
-        long = self.simulation.get_property_value("position/long-gc-deg")
-        lat = self.simulation.get_property_value("position/lat-geod-deg")
-        alt = self.simulation.get_property_value('position/h-sl-meters')
         roll = self.simulation.get_property_value("attitude/roll-rad")
         pitch = self.simulation.get_property_value("attitude/pitch-rad")
         yaw = self.simulation.get_property_value("attitude/psi-deg")
+        long = self.simulation.get_property_value("position/long-gc-deg")
+        lat = self.simulation.get_property_value("position/lat-geod-deg")
+        alt = self.simulation.get_property_value('position/h-sl-meters')
         goal_x = obs["goal_lat_geod_deg"]
         goal_y = obs["goal_long_gc_deg"]
         goal_z = obs["goal_h_sl_meters"]
-
         with open(f"./Results/result_{self.dateObj.strftime('%Y%m%d%H%M%S')}.acmi", 'a+', encoding = 'utf-8') as f:
             if f.tell() == 0:f.write(f"""FileType=text/acmi/tacview\nFileVersion=2.1\n0,ReferenceTime={self.dateObj.strftime('%Y-%m-%dT%H:%M:%SZ')}\n0,ReferenceLongitude=0.0\n0,ReferenceLatitude=0.0""")
-            f.write(f"""\n#{round((datetime.now() - self.dateObj).total_seconds(), 2)}\nF{date},T={long}|{lat}|{alt}|{deg(roll)}|{deg(pitch)}|{yaw},Name=F-16C-52,Type=Air+FixedWing,Color=Yellow\nE{date},T={goal_y[0]}|{goal_x[0]}|{goal_z[0]},Name=Target,Type=Air+FixedWing,Color=Red""")
-
+            f.write(f"""\n#{round((datetime.now() - self.dateObj).total_seconds(), 2)}\nF{date},T={long}|{lat}|{alt}|{deg(roll)}|{deg(pitch)}|{yaw},Name=F-16C-52,Type=Air+FixedWing,Color=Blue\nE{date},T={goal_y[0]}|{goal_x[0]}|{goal_z[0]},Name=F-16C-52,Type=Air+FixedWing,Color=Red""")
         reward, done = 0, False
-        if np.sqrt((lat - deg(goal_x)) ** 2 + (long - deg(goal_y)) ** 2) < self.dg and abs(alt - goal_z) < self.dg: reward, done = 10000, True
-        if alt < 10: reward, done = -10, True
+        if alt < 10: 
+            reward, done = -10, True
+
+        if geodesic.inv(goal_y[0], goal_x[0], long, lat)[2] < self.dg and abs(goal_z[0] - alt) < self.dg: 
+            reward, done = 10000, True
 
         return obs, reward, done, {} 
+
 
     def getStates(self):
         return {
@@ -141,7 +146,7 @@ class JSBSimEnv(Env):
             "velocities_r_rad_sec": np.array([self.simulation.get_property_value("velocities/r-rad_sec")]),
             "attitude_phi_rad": np.array([self.simulation.get_property_value("attitude/phi-rad")]),
             "attitude_theta_rad": np.array([self.simulation.get_property_value("attitude/theta-rad")]),
-            "attitude_psi_deg": np.array([self.simulation.get_property_value("attitude/psi-deg")]),
+            "attitude_psi_rad": np.array([self.simulation.get_property_value("attitude/psi-rad")]),
             "goal_lat_geod_deg": np.array([self.goal[0]]),
             "goal_long_gc_deg": np.array([self.goal[1]]),
             "goal_h_sl_meters": np.array([self.goal[2]])
@@ -174,7 +179,7 @@ class JSBSimEnv(Env):
         self.f16.transform.x = -y
         self.f16.transform.y = z
 
-        rot = Quaternion.from_euler(obs["attitude_phi_rad"], obs["attitude_theta_rad"], rad(obs["attitude_psi_deg"]))
+        rot = Quaternion.from_euler(obs["attitude_phi_rad"], obs["attitude_theta_rad"], obs["attitude_psi_rad"])
         rot = Quaternion(rot.w, -rot.y, -rot.z, rot.x)
         self.f16.transform.rotation = rot
 
