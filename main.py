@@ -11,7 +11,7 @@ class Zaman(object):
         self.sonZaman = time()
 
     def zamanDurumu(self):
-        if time() > self.sonZaman + (1 / 10):
+        if time() > self.sonZaman + (1 / 68):
             self.sonZaman = time()
             return True
         return False
@@ -30,7 +30,7 @@ class Main:
 
     def run(self, option):
         while not self.done:
-            # if self.calculateTime.zamanDurumu():
+            if self.calculateTime.zamanDurumu():
                 render_data = self.env.render(mode='rgb_array')
                 action, _ = self.model.predict(self.obs, deterministic=True)
                 self.obs, reward, self.done, _ = self.env.step(action)

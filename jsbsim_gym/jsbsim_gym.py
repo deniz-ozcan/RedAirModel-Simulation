@@ -17,20 +17,21 @@ class PositionReward(Wrapper):
 
     def step(self, action):
         obs, reward, done, info = super().step(action)
-        dist, alt = self.getDistance(obs)
+        dist, alt, head = self.getDistance(obs)
         reward += self.gain * (self.last_dist - dist)
         reward += self.gain * (self.last_alt - alt)
+        reward += self.gain * (self.last_heading - head)
         self.last_dist, self.last_alt =  dist, alt
         return obs, reward, done, info
 
     def reset(self):
         obs = super().reset()
-        self.last_dist, self.last_alt = self.getDistance(obs)
+        self.last_dist, self.last_alt, self.last_heading = self.getDistance(obs)
         return obs
 
     def getDistance(self, obs):
         az, _, dist = geodesic.inv(obs["goal_long_gc_deg"], obs["goal_lat_geod_deg"], obs["pos_long_gc_deg"], obs["pos_lat_geod_deg"])
-        return dist[0], abs(obs["goal_h_sl_meters"][0]- obs["pos_h_sl_meters"][0])
+        return dist[0], abs(obs["goal_h_sl_meters"][0]- obs["pos_h_sl_meters"][0]), az[0]
 
     # def getDisplacement(self, obs):
     #     displacement = np.concatenate(( np.deg2rad(obs["goal_lat_geod_deg"]) - np.deg2rad(obs["pos_lat_geod_deg"]), 
@@ -117,6 +118,7 @@ class JSBSimEnv(Env):
         long = self.simulation.get_property_value("position/long-gc-deg")
         lat = self.simulation.get_property_value("position/lat-geod-deg")
         alt = self.simulation.get_property_value('position/h-sl-meters')
+        print(f"Alt: {alt} |", end=" ")
         goal_x = obs["goal_lat_geod_deg"]
         goal_y = obs["goal_long_gc_deg"]
         goal_z = obs["goal_h_sl_meters"]
@@ -154,50 +156,50 @@ class JSBSimEnv(Env):
 
     def render(self, mode = 'human'):
         scale = 1e-3
-        RADIUS = 6.3781e6
-        if self.viewer is None:
-            self.viewer = Viewer(1280, 720)
-            f16_mesh = load_mesh(self.viewer.ctx, self.viewer.prog, "f16.obj")
-            self.f16 = RenderObject(f16_mesh)
-            self.f16.transform.scale = 1 / 30
-            self.f16.color = 0, 1, 0
-            goal_mesh = load_mesh(self.viewer.ctx, self.viewer.prog, "f16.obj")
-            self.targetF16 = RenderObject(goal_mesh)
-            self.targetF16.transform.scale = 1 / 30
-            self.targetF16.color = 1, 0, 0
-            self.viewer.objects.append(self.f16)
-            self.viewer.objects.append(self.targetF16)
-            self.viewer.objects.append(Grid(self.viewer.ctx, self.viewer.unlit, 21, 1.))
+        # RADIUS = 6.3781e6
+        # if self.viewer is None:
+        #     self.viewer = Viewer(1280, 720)
+        #     f16_mesh = load_mesh(self.viewer.ctx, self.viewer.prog, "f16.obj")
+        #     self.f16 = RenderObject(f16_mesh)
+        #     self.f16.transform.scale = 1 / 30
+        #     self.f16.color = 0, 1, 0
+        #     goal_mesh = load_mesh(self.viewer.ctx, self.viewer.prog, "f16.obj")
+        #     self.targetF16 = RenderObject(goal_mesh)
+        #     self.targetF16.transform.scale = 1 / 30
+        #     self.targetF16.color = 1, 0, 0
+        #     self.viewer.objects.append(self.f16)
+        #     self.viewer.objects.append(self.targetF16)
+        #     self.viewer.objects.append(Grid(self.viewer.ctx, self.viewer.unlit, 21, 1.))
 
-        # Rough conversion from lat/long to meters / yaklaşık dönüşüm
-        obs = self.getStates()
-        x = rad(obs["pos_lat_geod_deg"]) * scale * RADIUS
-        y = rad(obs["pos_long_gc_deg"]) * scale * RADIUS
-        z = obs["pos_h_sl_meters"] * scale
+        # # Rough conversion from lat/long to meters / yaklaşık dönüşüm
+        # obs = self.getStates()
+        # x = rad(obs["pos_lat_geod_deg"]) * scale * RADIUS
+        # y = rad(obs["pos_long_gc_deg"]) * scale * RADIUS
+        # z = obs["pos_h_sl_meters"] * scale
 
-        self.f16.transform.z = x
-        self.f16.transform.x = -y
-        self.f16.transform.y = z
+        # self.f16.transform.z = x
+        # self.f16.transform.x = -y
+        # self.f16.transform.y = z
 
-        rot = Quaternion.from_euler(obs["attitude_phi_rad"], obs["attitude_theta_rad"], obs["attitude_psi_rad"])
-        rot = Quaternion(rot.w, -rot.y, -rot.z, rot.x)
-        self.f16.transform.rotation = rot
+        # rot = Quaternion.from_euler(obs["attitude_phi_rad"], obs["attitude_theta_rad"], obs["attitude_psi_rad"])
+        # rot = Quaternion(rot.w, -rot.y, -rot.z, rot.x)
+        # self.f16.transform.rotation = rot
 
-        x, y, z = self.goal * scale
-        self.targetF16.transform.z = x
-        self.targetF16.transform.x = -y
-        self.targetF16.transform.y = z
-        r = self.f16.transform.position - self.targetF16.transform.position
-        rhat = r/np.linalg.norm(r)
-        x, y, z = r
-        yaw = np.arctan2(-x,-z)
-        pitch = np.arctan2(-y, np.sqrt(x*2 + z*2))
+        # x, y, z = self.goal * scale
+        # self.targetF16.transform.z = x
+        # self.targetF16.transform.x = -y
+        # self.targetF16.transform.y = z
+        # r = self.f16.transform.position - self.targetF16.transform.position
+        # rhat = r/np.linalg.norm(r)
+        # x, y, z = r
+        # yaw = np.arctan2(-x,-z)
+        # pitch = np.arctan2(-y, np.sqrt(x*2 + z*2))
 
-        self.viewer.set_view(*(r + self.targetF16.transform.position + rhat + np.array([0, .33, 0])), Quaternion.from_euler(-pitch, yaw, 0, mode=1))
-        self.viewer.render()
+        # self.viewer.set_view(*(r + self.targetF16.transform.position + rhat + np.array([0, .33, 0])), Quaternion.from_euler(-pitch, yaw, 0, mode=1))
+        # self.viewer.render()
 
-        if mode == 'rgb_array':
-            return self.viewer.get_frame()
+        # if mode == 'rgb_array':
+        #     return self.viewer.get_frame()
 
     def close(self):
         if self.viewer is not None:
