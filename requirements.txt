@@ -4,3 +4,4 @@ torch~=2.1.1
 JSBSim~=1.2.0
 pygame~=2.5.2
 moderngl~=5.9.0
+stable-baselines~=1.6.2
